@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#070b12">
+<title>冰原余烬 · 冰汽时代风格城市生存</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#070b12;color:#dfe8f2;font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;cursor:pointer}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#top{background:linear-gradient(#0d1520,#0a1019);border-bottom:1px solid #22344a;padding:6px 8px 5px;z-index:5}
+#res{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.r{background:#111c2a;border:1px solid #1f3045;border-radius:6px;padding:3px 4px;text-align:center;line-height:1.1;min-width:0}
+.r .ic{font-size:13px}.r .v{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.r .d{font-size:10px;color:#7f93a8;font-variant-numeric:tabular-nums;white-space:nowrap}
+.r .d.pos{color:#8fd08f}.r .d.neg{color:#ff8a7a}
+.r.low{border-color:#c0503f;box-shadow:0 0 6px #c0503f88 inset}
+#status{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:12px}
+#clock{white-space:nowrap;font-variant-numeric:tabular-nums}
+#temp{font-weight:700;padding:1px 6px;border-radius:4px;background:#13314f;color:#9fd3ff;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bars{flex:1;display:flex;gap:6px;min-width:0}
+.bar{flex:1;min-width:0}
+.bar .lab{display:flex;justify-content:space-between;font-size:10px;color:#9fb1c4}
+.bar .tr{height:7px;background:#16202d;border-radius:4px;overflow:hidden;border:1px solid #233246}
+.bar .fl{height:100%;transition:width .4s}
+#hopeF{background:linear-gradient(90deg,#3d7bd1,#8fd0ff)}
+#discF{background:linear-gradient(90deg,#c26a2b,#ff5a3c)}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#alerts{position:absolute;left:6px;top:6px;display:flex;flex-direction:column;gap:4px;pointer-events:none;max-width:60%}
+.al{background:#2a1010cc;border:1px solid #a0402f;color:#ffc9bd;font-size:11px;padding:3px 7px;border-radius:5px;width:max-content;max-width:100%}
+.al.warn{background:#2a2210cc;border-color:#a08a2f;color:#ffe9a8}
+#toasts{position:absolute;right:6px;top:6px;display:flex;flex-direction:column;gap:4px;align-items:flex-end;pointer-events:none;max-width:62%}
+.toast{background:#0d1824e6;border:1px solid #2c4560;font-size:12px;padding:5px 9px;border-radius:6px;animation:tin .3s;transition:opacity .6s}
+.toast.bad{border-color:#a0402f;color:#ffc9bd}.toast.good{border-color:#3f8f5a;color:#c9f5d4}
+@keyframes tin{from{transform:translateX(20px);opacity:0}}
+#hint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font-size:12px;color:#9fb1c4;background:#0b1520cc;padding:4px 10px;border-radius:12px;pointer-events:none;white-space:nowrap;max-width:96%;overflow:hidden;text-overflow:ellipsis}
+#bar{display:flex;gap:4px;padding:6px;background:#0a1019;border-top:1px solid #22344a;z-index:5}
+#bar button{flex:1;background:#132235;border:1px solid #284058;border-radius:8px;padding:7px 2px;font-size:12px;line-height:1.15;min-width:0}
+#bar button b{display:block;font-size:17px;font-weight:400}
+#bar button.on{background:#3a2412;border-color:#d07a2a;color:#ffd2a0}
+#bar .spd{display:flex;gap:3px;flex:1.6}
+#bar .spd button{padding:7px 0}
+#sheet{position:absolute;left:0;right:0;bottom:0;max-height:62%;background:#0c1622f5;border-top:2px solid #d07a2a;border-radius:14px 14px 0 0;z-index:20;display:flex;flex-direction:column;box-shadow:0 -6px 30px #000a;transition:transform .25s}
+#sheet.hidden{transform:translateY(110%);pointer-events:none}
+.sh-h{display:flex;align-items:center;padding:10px 12px 6px;gap:8px}
+.sh-h h3{margin:0;font-size:16px;flex:1;color:#ffd2a0}
+.sh-h button{background:#1b2a3c;border:1px solid #2c4560;border-radius:6px;width:32px;height:32px}
+#sheetBody{overflow-y:auto;padding:0 12px 14px;font-size:13px;-webkit-overflow-scrolling:touch}
+@media (min-width:900px){
+ #sheet{left:auto;top:0;width:380px;max-height:none;border-top:none;border-left:2px solid #d07a2a;border-radius:0}
+ #sheet.hidden{transform:translateX(110%)}
+ #res{grid-template-columns:repeat(6,minmax(90px,140px));justify-content:center}
+ #status{max-width:900px;margin:5px auto 0}
+ #bar{justify-content:center}#bar button{max-width:110px}#bar .spd{max-width:200px}
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
+.card{background:#122133;border:1px solid #284058;border-radius:8px;padding:8px;text-align:left}
+.card.dis{opacity:.45}
+.card h4{margin:0 0 3px;font-size:14px}.card p{margin:3px 0;font-size:11.5px;color:#a9bacb;line-height:1.35}
+.cost{font-size:12px;color:#ffd2a0}
+.btn{background:#2a3f57;border:1px solid #3d5a7a;border-radius:7px;padding:7px 12px;font-size:13px}
+.btn.pri{background:#8a4a17;border-color:#d07a2a;color:#fff1e0}
+.btn.red{background:#5a1e1a;border-color:#a0402f}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;align-items:center;gap:8px;margin:7px 0;flex-wrap:wrap}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}
+.kv span:nth-child(odd){color:#8fa3b8}
+.staff{display:flex;align-items:center;gap:10px;margin:10px 0}
+.staff .n{font-size:22px;font-weight:700;min-width:70px;text-align:center}
+.staff button{width:46px;height:42px;font-size:22px;border-radius:8px;background:#1d3349;border:1px solid #3d5a7a}
+.pbar{height:8px;background:#16202d;border-radius:4px;overflow:hidden;border:1px solid #233246}
+.pbar i{display:block;height:100%;background:#d07a2a}
+.lvls{display:flex;gap:5px}.lvls button{flex:1;padding:9px 0;background:#1d3349;border:1px solid #3d5a7a;border-radius:7px}
+.lvls button.on{background:#8a4a17;border-color:#ffb060}
+.laws{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.law{background:#122133;border:1px solid #284058;border-radius:8px;padding:7px;margin-bottom:6px}
+.law.signed{border-color:#d07a2a;background:#2a1c10}
+.law.lock{opacity:.45}
+.law h4{margin:0;font-size:13px}.law p{margin:3px 0 5px;font-size:11px;color:#a9bacb;line-height:1.35}
+.brt{font-size:13px;color:#ffd2a0;margin:4px 0 6px;text-align:center;border-bottom:1px solid #284058;padding-bottom:3px}
+.tag{display:inline-block;font-size:10.5px;padding:1px 5px;border-radius:4px;background:#2a3f57;margin-left:4px}
+.muted{color:#7f93a8;font-size:12px}
+.log{font-size:12px;color:#a9bacb;max-height:150px;overflow:auto;border-top:1px solid #22344a;margin-top:8px;padding-top:6px}
+.log div{margin:2px 0}
+#screen{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px}
+#modal,#screen{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:#03060acc;padding:16px}
+#modal.hidden,#screen.hidden{display:none}
+.mbox{background:linear-gradient(#142336,#0c1622);border:1px solid #d07a2a;border-radius:12px;max-width:440px;width:100%;padding:16px;box-shadow:0 10px 40px #000}
+.mbox h2{margin:0 0 8px;color:#ffd2a0;font-size:18px}
+.mbox p{line-height:1.6;font-size:14px;color:#cdd9e5;margin:6px 0 12px}
+.ch{display:block;width:100%;text-align:left;margin:7px 0;background:#1d3349;border:1px solid #3d5a7a;border-radius:8px;padding:9px 11px}
+.ch:hover{border-color:#d07a2a}
+.ch small{display:block;color:#9fb1c4;font-size:11.5px;margin-top:2px}
+.ch:disabled{opacity:.4}
+#screen{position:fixed;background:radial-gradient(circle at 50% 40%,#1a2b40,#04070c 75%);overflow:auto}
+.scr{max-width:520px;width:100%;text-align:center}
+.scr h1{font-size:38px;margin:0;letter-spacing:6px;color:#ffe2bf;text-shadow:0 0 24px #ff8a2a99}
+.scr .sub{color:#8fb2d4;margin:6px 0 16px;letter-spacing:2px}
+.scr .txt{text-align:left;background:#0c1622cc;border:1px solid #284058;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.65;color:#cdd9e5}
+.scr .txt b{color:#ffd2a0}
+.scr .btns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.scr .btns .btn{padding:11px 22px;font-size:15px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.stats div{background:#122133;border:1px solid #284058;border-radius:8px;padding:8px}
+.stats b{display:block;font-size:20px;color:#ffd2a0}
+@media (max-width:420px){.r .v{font-size:13px}.r .d{font-size:9px}#bar button{font-size:11px}.scr h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div id="app">
+ <header id="top">
+  <div id="res"></div>
+  <div id="status">
+   <span id="clock">第1天 08:00</span><span id="temp">-20°C</span>
+   <div class="bars">
+    <div class="bar"><div class="lab"><span>希望</span><span id="hopeV">60</span></div><div class="tr"><div class="fl" id="hopeF"></div></div></div>
+    <div class="bar"><div class="lab"><span>不满</span><span id="discV">10</span></div><div class="tr"><div class="fl" id="discF"></div></div></div>
+   </div>
+  </div>
+ </header>
+ <main id="stage">
+  <canvas id="cv"></canvas>
+  <div id="alerts"></div>
+  <div id="toasts"></div>
+  <div id="hint">点击空地建造，点击建筑分配工人，点击中央熔炉调节火力</div>
+  <aside id="sheet" class="hidden"><div class="sh-h"><h3 id="sheetTitle"></h3><button id="sheetClose" aria-label="关闭">✕</button></div><div id="sheetBody"></div></aside>
+  <div id="modal" class="hidden"></div>
+  <div id="screen"></div>
+ </main>
+ <nav id="bar">
+  <button data-open="furnace"><b>🔥</b>熔炉</button>
+  <button data-open="laws"><b>📜</b>法典</button>
+  <button data-open="tech"><b>⚙️</b>研究</button>
+  <button data-open="pop"><b>👥</b>人口</button>
+  <button id="heatBtn"><b>🌡️</b>热力</button>
+  <div class="spd"><button data-spd="0">⏸</button><button data-spd="1">1×</button><button data-spd="2">2×</button><button data-spd="3">3×</button></div>
+ </nav>
+</div>
+<script>
+'use strict';
+/* ====================== 数据定义 ====================== */
+const $=s=>document.querySelector(s);
+const HOUR_MS=1100, DAYS=30, SAVE_KEY='bingyuan-yujin-save-v1';
+const RES=[['coal','煤炭','🪨'],['wood','木材','🪵'],['steel','钢铁','⚙️'],['raw','生食','🥩'],['food','口粮','🍲']];
+const TN={w:'工人',e:'工程师',c:'儿童'};
+const RINGS=[{n:6,r:0.30,f:1.0},{n:10,r:0.535,f:0.8},{n:14,r:0.77,f:0.6}];
+const LEVELS=[['舒适','#ffb347'],['寒冷','#e8d27a'],['极寒','#6fb6ff'],['冻结','#5b6cff']];
+const B={
+ tent:{name:'帐篷',ic:'⛺',kind:'house',cost:{wood:10},cap:10,ins:0,desc:'简陋的帆布帐篷，可住10人，几乎不保温。'},
+ house:{name:'保温木屋',ic:'🏠',kind:'house',cost:{wood:25,steel:5},cap:10,ins:15,req:'house',desc:'厚木墙加小火炉，可住10人，保温 +15°C。'},
+ coal:{name:'采煤站',ic:'⛏️',kind:'work',cost:{wood:15,steel:5},max:10,prod:'coal',rate:1.0,tech:'coal2',ins:5,desc:'从冻土里凿出煤块。每名工人每小时约1煤炭。'},
+ saw:{name:'伐木场',ic:'🪓',kind:'work',cost:{wood:15},max:10,prod:'wood',rate:0.5,tech:'saw2',ins:5,desc:'砍伐冰封的枯树。每名工人每小时约0.5木材。'},
+ steel:{name:'钢铁厂',ic:'🏭',kind:'work',cost:{wood:30,steel:10},max:10,prod:'steel',rate:0.25,tech:'steel2',ins:5,desc:'回收废铁、冶炼钢材。每名工人每小时约0.25钢铁。'},
+ hunt:{name:'猎人小屋',ic:'🏹',kind:'work',cost:{wood:15},max:5,prod:'raw',rate:0.4,tech:'hunt2',ins:0,desc:'猎人出城狩猎，带回生食。在户外工作，容易冻病。'},
+ kitchen:{name:'厨房',ic:'🍲',kind:'work',cost:{wood:20},max:5,rate:1,ins:5,desc:'把生食煮成口粮：1生食→2口粮。每名工人每小时处理1生食。'},
+ med:{name:'医疗站',ic:'⚕️',kind:'work',cost:{wood:20},max:5,eng:true,ins:10,desc:'只有工程师能行医。满员可同时救治10名病人，全天运转。'},
+ lab:{name:'工作坊',ic:'🔬',kind:'work',cost:{wood:25},max:5,eng:true,rate:1,ins:5,desc:'工程师在此研发新技术。每名工程师每小时1研究点。'},
+ heater:{name:'蒸汽加热器',ic:'♨️',kind:'heater',cost:{wood:10,steel:15},req:'heater',ins:0,desc:'为周围建筑 +20°C，每小时消耗2煤炭。'},
+};
+const BUILD_ORDER=['tent','house','coal','saw','hunt','kitchen','med','lab','steel','heater'];
+const TECH=[
+ {id:'heater',name:'蒸汽加热器',cost:80,desc:'解锁加热器：周围建筑 +20°C。'},
+ {id:'house',name:'保温木屋',cost:90,desc:'解锁木屋：保温 +15°C 的住所。'},
+ {id:'coal2',name:'深层钻头',cost:105,desc:'采煤站产量 +30%。'},
+ {id:'hunt2',name:'改良猎枪',cost:80,desc:'猎人小屋产量 +30%。'},
+ {id:'saw2',name:'蒸汽锯',cost:80,desc:'伐木场产量 +30%。'},
+ {id:'power1',name:'熔炉增压 I',cost:115,desc:'熔炉各档热量 +10°C。'},
+ {id:'med2',name:'消毒药剂',cost:105,desc:'医疗站容量 +50%，治愈更快。'},
+ {id:'steel2',name:'鼓风高炉',cost:115,desc:'钢铁厂产量 +30%。'},
+ {id:'valve',name:'压力阀门',cost:130,desc:'熔炉超载时压力上升速度减半。'},
+ {id:'power2',name:'熔炉增压 II',cost:195,req:'power1',desc:'熔炉各档热量再 +10°C。'},
+];
+const LAWS=[
+ {id:'overtime',br:0,name:'延长工时',desc:'工作时间延长到 22:00，产量大增；加班期间不满上升。签署：不满 +5。'},
+ {id:'emergency',br:0,name:'紧急轮班',req:'overtime',desc:'解锁“紧急轮班”：接下来24小时全城连轴转，不满 +10，可能出工伤事故。冷却3天。'},
+ {id:'sawdust',br:0,name:'汤里加木屑',desc:'厨房每份生食多出25%口粮，但人们更容易生病。签署：希望 -3。'},
+ {id:'childlabor',br:0,name:'童工',ex:'shelter',desc:'儿童可在普通岗位工作（效率60%）。签署：希望 -10。'},
+ {id:'snowpit',br:0,name:'雪坑',ex:'cemetery',desc:'把遗体埋进城外雪坑，死亡对士气的打击减半。签署：希望 -5。'},
+ {id:'shelter',br:1,name:'儿童庇护所',ex:'childlabor',desc:'孩子们在庇护所里学习：每名健康儿童每个工作小时 +0.1 研究点，希望缓慢上升。签署：希望 +5。'},
+ {id:'cemetery',br:1,name:'墓地',ex:'snowpit',cost:{wood:30},desc:'体面地安葬死者，死亡对士气的打击降低60%。消耗木材30。签署：希望 +5。'},
+ {id:'care',br:1,name:'额外口粮',desc:'病人每餐多领一份口粮，治愈速度 +50%。签署：希望 +3。'},
+ {id:'festival',br:1,name:'篝火集会',desc:'解锁“集会”：消耗20口粮，希望 +8，不满 -10。冷却4天。'},
+];
+/* ====================== 状态 ====================== */
+let S=null, speed=1, heatView=false, sel=-1, sheetMode=null, modalOpen=false, lastDelta={}, pointerInSheet=false;
+const slots=[];
+RINGS.forEach((R,ri)=>{for(let i=0;i<R.n;i++){const a=i/R.n*Math.PI*2-Math.PI/2+[0.52,0.31,0.62][ri];slots.push({ring:ri,x:Math.cos(a)*R.r,y:Math.sin(a)*R.r});}});
+function newState(){
+ return {day:1,hour:8,acc:0,res:{coal:200,wood:150,steel:40,raw:30,food:100},pop:{w:30,e:10,c:10},sick:{w:0,e:0,c:0},
+  hope:60,disc:10,furnace:{lvl:1,over:false,stress:0,out:false},laws:[],lawCd:0,tech:[],research:null,rp:0,
+  emergencyLeft:0,emergencyCd:0,festivalCd:0,strike:0,hungryFrac:0,starve:0,nextEvent:40,seen:{},
+  b:slots.map(()=>null),log:[],cache:{temps:slots.map(()=>-20),occ:slots.map(()=>0),homeless:0,groups:[0,0,0,0],treated:0,untreated:0,out:-20},
+  stats:{deaths:0,arrived:0,maxPop:50,minTemp:-20,built:0},ended:false,started:true};
+}
+const has=id=>S.laws.includes(id)||S.tech.includes(id);
+const totalPop=()=>S.pop.w+S.pop.e+S.pop.c;
+const totalSick=()=>S.sick.w+S.sick.e+S.sick.c;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=n=>Math.floor(Math.random()*n);
+const pround=x=>{const f=Math.floor(x);return f+(Math.random()<x-f?1:0)};
+const staffN=b=>b.staff.w+b.staff.e+b.staff.c;
+const staffEff=b=>(b.staff.w+b.staff.e+b.staff.c*0.6)/B[b.type].max;
+function employed(t){let n=0;for(const b of S.b)if(b&&b.staff)n+=b.staff[t];return n}
+function idle(t){return S.pop[t]-S.sick[t]-employed(t)}
+function housingCap(){let c=0;for(const b of S.b)if(b&&B[b.type].kind==='house')c+=B[b.type].cap;return c}
+/* ====================== 温度 ====================== */
+function outsideTemp(day,hour){
+ let t=-18-day*0.9;
+ for(const [a,b,d] of [[7,9,-22],[15,17,-30],[22,24,-38]]) if(day>=a&&day<=b) t+=d;
+ if(day>=28) t+=-52-(day-28)*12;
+ if(hour<6||hour>=21) t-=5;
+ return Math.round(t);
+}
+function furnaceHeat(){const f=S.furnace;if(f.lvl===0||f.out)return 0;return [0,15,30,45][f.lvl]+(has('power1')?10:0)+(has('power2')?10:0)+(f.over?15:0)}
+function coalUse(){const f=S.furnace;let c=[0,4,8,12][f.lvl]*(f.over?1.5:1);for(const b of S.b)if(b&&b.type==='heater')c+=2;return c}
+function heaterBonus(i){if(S.furnace.out)return 0;let h=0;const s=slots[i];S.b.forEach((b,j)=>{if(b&&b.type==='heater'&&j!==i){const d=Math.hypot(slots[j].x-s.x,slots[j].y-s.y);if(d<0.33)h+=20}});return Math.min(h,30)}
+function slotTemp(i,out){const b=S.b[i];return Math.round(out+furnaceHeat()*RINGS[slots[i].ring].f+heaterBonus(i)+(b?B[b.type].ins:0))}
+const level=t=>t>=0?0:t>=-20?1:t>=-40?2:3;
+/* ====================== 人口操作 ====================== */
+function pickType(pool){const tot=pool.w+pool.e+pool.c;if(tot<=0)return null;let r=Math.random()*tot;for(const t of ['w','e','c']){if(r<pool[t])return t;r-=pool[t]}return 'w'}
+function reconcile(){
+ for(const t of ['w','e','c']){
+  let over=employed(t)-(S.pop[t]-S.sick[t]);
+  for(let i=S.b.length-1;i>=0&&over>0;i--){const b=S.b[i];if(b&&b.staff&&b.staff[t]>0){const k=Math.min(b.staff[t],over);b.staff[t]-=k;over-=k}}
+ }
+}
+function deathPenalty(n){const m=has('cemetery')?0.4:has('snowpit')?0.5:1;S.hope-=2*n*m;S.disc+=1*n*m}
+function kill(n,fromSick,cause){
+ let k=0;
+ for(let i=0;i<n;i++){
+  const pool=fromSick?S.sick:{w:S.pop.w-S.sick.w,e:S.pop.e-S.sick.e,c:S.pop.c-S.sick.c};
+  const t=pickType(pool);if(!t)break;
+  S.pop[t]--;if(fromSick)S.sick[t]--;k++;
+ }
+ if(k>0){S.stats.deaths+=k;deathPenalty(k);log(`${k}人${cause}。`,'bad');reconcile()}
+ return k;
+}
+function makeSick(n){let k=0;for(let i=0;i<n;i++){const t=pickType({w:S.pop.w-S.sick.w,e:S.pop.e-S.sick.e,c:S.pop.c-S.sick.c});if(!t)break;S.sick[t]++;k++}if(k)reconcile();return k}
+function heal(n){for(let i=0;i<n;i++){const t=pickType(S.sick);if(!t)break;S.sick[t]--}}
+function addPop(p){for(const t in p){S.pop[t]+=p[t];S.stats.arrived+=p[t]}S.stats.maxPop=Math.max(S.stats.maxPop,totalPop())}
+/* ====================== 每小时模拟 ====================== */
+function processHour(){
+ const before={...S.res};
+ const out=outsideTemp(S.day,S.hour);S.stats.minTemp=Math.min(S.stats.minTemp,out);
+ const f=S.furnace,need=coalUse();
+ if(need>0&&S.res.coal>=need){S.res.coal-=need;if(f.out)log('熔炉重新燃起！','good');f.out=false}
+ else if(need>0){S.res.coal=0;if(!f.out)log('煤炭耗尽，熔炉熄灭了！','bad');f.out=true}
+ else f.out=false;
+ const temps=slots.map((s,i)=>slotTemp(i,out));
+ // 工作
+ const endH=has('overtime')?22:18;
+ const working=S.strike<=0&&(S.emergencyLeft>0||(S.hour>=8&&S.hour<endH));
+ const overtimeNow=working&&S.emergencyLeft<=0&&S.hour>=18;
+ let rp=0,newSickX=0;
+ S.b.forEach((b,i)=>{
+  if(!b||!b.staff)return;const d=B[b.type],n=staffN(b);if(!n)return;
+  const eff=staffEff(b);
+  if(b.type==='med')return;
+  if(!working)return;
+  newSickX+=n*[0,0.001,0.004,0.008][level(temps[i])];
+  if(d.prod){S.res[d.prod]+=d.rate*eff*d.max*(d.tech&&has(d.tech)?1.3:1)}
+  else if(b.type==='kitchen'){const c=Math.min(S.res.raw,d.rate*eff*d.max);S.res.raw-=c;S.res.food+=c*(has('sawdust')?2.5:2)}
+  else if(b.type==='lab'){rp+=d.rate*eff*d.max}
+ });
+ if(working&&has('shelter'))rp+=(S.pop.c-S.sick.c)*0.1;
+ S.rp+=rp;
+ if(S.research){const t=TECH.find(x=>x.id===S.research);if(S.rp>=t.cost){S.rp-=t.cost;S.tech.push(t.id);S.research=null;log(`研究完成：${t.name}`,'good');refreshSheet(true)}}
+ if(S.emergencyLeft>0&&Math.random()<0.04)kill(1,false,'在紧急轮班中出了工伤事故');
+ // 住房
+ const houses=[];S.b.forEach((b,i)=>{if(b&&B[b.type].kind==='house')houses.push({i,t:temps[i],cap:B[b.type].cap})});
+ houses.sort((a,b)=>b.t-a.t);
+ let remain=totalPop();const groups=[0,0,0,0],occ=slots.map(()=>0);
+ for(const h of houses){const n=Math.min(remain,h.cap);occ[h.i]=n;remain-=n;groups[level(h.t)]+=n}
+ const homeless=remain;
+ // 生病
+ const rates=[0.001,0.005,0.012,0.025];
+ for(let l=0;l<4;l++)newSickX+=groups[l]*rates[l];
+ newSickX+=homeless*(rates[level(out)]+0.008);
+ if(has('sawdust'))newSickX+=totalPop()*0.0005;
+ const ns=makeSick(pround(newSickX));
+ // 医疗
+ let cap=0;S.b.forEach(b=>{if(b&&b.type==='med')cap+=10*staffEff(b)});if(has('med2'))cap*=1.5;cap=Math.floor(cap);
+ const sickT=totalSick(),treated=Math.min(sickT,cap),untreated=sickT-treated;
+ heal(pround(treated*0.06*(has('care')?1.5:1)*(has('med2')?1.2:1))+pround(untreated*0.012*(level(out)<2?1.5:1)));
+ const sd=pround(untreated*0.008);if(sd)kill(sd,true,'因病去世');
+ // 冻死
+ if(out<-45){const fx=groups[3]*0.002+homeless*0.004;const fd=pround(fx);if(fd)kill(fd,false,'被活活冻死')}
+ // 吃饭
+ if(S.hour===12||S.hour===19){
+  const P=totalPop();let need=P*0.5+(has('care')?totalSick()*0.5:0);
+  const a=Math.min(S.res.food,need);S.res.food-=a;need-=a;
+  let rawEaten=0;if(need>0){rawEaten=Math.min(S.res.raw,need);S.res.raw-=rawEaten;need-=rawEaten}
+  if(rawEaten>0)makeSick(pround(rawEaten*0.03));
+  S.hungryFrac=P?clamp(need*2/P,0,1):0;
+  if(need>0){S.starve++;log(`口粮不足，${Math.ceil(need*2)}人挨饿！`,'bad');if(S.starve>=3)kill(Math.max(1,Math.ceil(need*0.15)),false,'饿死')}
+  else S.starve=0;
+ }
+ // 希望与不满
+ const P=Math.max(1,totalPop());
+ const hf=homeless/P,cf=(groups[1]*0.3+groups[2]+groups[3]*1.5+(level(out)>=2?homeless*0.5:0))/P,uf=untreated/P,gf=S.hungryFrac,comf=groups[0]/P;
+ let dH=-0.05+0.05*comf-0.5*hf-0.7*gf-0.4*uf-0.3*cf+(has('shelter')?0.02:0);
+ let dD=0.01-0.05*comf+0.5*hf+0.6*gf+0.25*uf+0.3*cf+(overtimeNow?0.25:0)+(S.emergencyLeft>0?0.35:0)+(has('childlabor')?0.01:0);
+ if(f.out&&out<-25){dH-=0.2;dD+=0.15}
+ S.hope=clamp(S.hope+dH,0,100);S.disc=clamp(S.disc+dD,0,100);
+ // 熔炉压力
+ if(f.over&&!f.out){const pre=f.stress;f.stress+=has('valve')?2.5:5;if(pre<70&&f.stress>=70)log('警告：熔炉压力超过70%！','bad')}else f.stress=Math.max(0,f.stress-4);
+ // 计时器
+ for(const k of ['lawCd','emergencyLeft','emergencyCd','festivalCd','strike'])if(S[k]>0)S[k]--;
+ S.cache={temps,occ,homeless,groups,treated,untreated,out,working};
+ lastDelta={};for(const k in S.res){S.res[k]=Math.max(0,S.res[k]);lastDelta[k]=S.res[k]-before[k]}
+ S.stats.maxPop=Math.max(S.stats.maxPop,totalPop());
+ S.hope=clamp(S.hope,0,100);S.disc=clamp(S.disc,0,100);
+ // 结束判定
+ if(f.stress>=100)return endGame('explode');
+ if(totalPop()<=0)return endGame('dead');
+ if(S.hope<=0)return endGame('hope');
+ if(S.disc>=100)return endGame('disc');
+ // 时间推进
+ S.hour++;
+ if(S.hour>=24){S.hour=0;S.day++;if(S.day>DAYS)return endGame('win');log(`—— 第${S.day}天 ——`);save()}
+ scripted();
+ const T=(S.day-1)*24+S.hour;
+ if(!modalOpen&&T>=S.nextEvent&&S.hour>=9&&S.hour<=20){S.nextEvent=T+28+rnd(20);randomEvent()}
+}
+/* ====================== 事件 ====================== */
+function scripted(){
+ const k=S.day+'-'+S.hour;
+ const once=(id,fn)=>{if(!S.seen[id]){S.seen[id]=1;fn()}};
+ if(S.day===1&&S.hour===10)once('tip1',()=>log('提示：先为所有人搭帐篷，再建采煤站、猎人小屋和厨房。'));
+ if(S.day===2&&S.hour===11)once('ref1',()=>evRefugee(true));
+ if(S.day===6&&S.hour===9)once('snap1',()=>info('寒潮预警','侦察兵带回消息：一股寒潮将在明天抵达，持续三天，气温将骤降约20°C。囤积煤炭，确保每个人都有住处！'));
+ if(S.day===14&&S.hour===9)once('snap2',()=>info('更强的寒潮','气象员敲响了铜钟：第15天起会有更猛烈的寒潮，气温再降近30°C。'));
+ if(S.day===21&&S.hour===9)once('snap3',()=>info('深寒将至','第22天起，持续三天的深寒将席卷冰原。熔炉必须全力运转。'));
+ if(S.day===25&&S.hour===9)once('storm',()=>info('大风暴','侦察兵惊恐地跑回城里：南方地平线上升起了一堵白色的墙——第28天起，前所未有的大风暴将持续三天，气温可能跌破零下一百度。\n\n储备至少三天的煤炭和口粮，研究熔炉增压，造好保温住所。挺过去，我们就活下来了！'));
+ if(S.day===28&&S.hour===0)once('storm2',()=>log('大风暴降临了！','bad'));
+}
+function evRefugee(big){
+ const p={w:(big?8:3)+rnd(5),e:rnd(big?3:2),c:1+rnd(3)},n=p.w+p.e+p.c;
+ showModal('雪原上的幸存者',`侦察兵在城外发现一队衣衫褴褛的幸存者，共${n}人（工人${p.w}、工程师${p.e}、儿童${p.c}）。他们冻得说不出话，恳求进城避寒。`,[
+  {t:'打开城门',d:'人口增加，需要更多住所与食物；希望 +5',fn:()=>{addPop(p);S.hope+=5;log(`${n}名幸存者加入了城市。`,'good')}},
+  {t:'拒之门外',d:'希望 -8',fn:()=>{S.hope-=8}}]);
+}
+const EVENTS=[
+ {id:'ref',w:3,cond:()=>S.day<=25,run:()=>evRefugee(false)},
+ {id:'sickchild',w:2,cond:()=>S.pop.c>0,run:()=>showModal('高烧的孩子','一个孩子高烧不退。医生说只有用钢制器械开刀才能救他，可钢铁对城市同样宝贵。',[
+  {t:'不惜代价救治',d:'钢铁 -10，希望 +6',ok:()=>S.res.steel>=10,fn:()=>{S.res.steel-=10;S.hope+=6;log('孩子得救了。','good')}},
+  {t:'听天由命',d:'一半可能失去这个孩子；希望 -3',fn:()=>{S.hope-=3;if(Math.random()<0.5){S.pop.c--;S.stats.deaths++;deathPenalty(1);reconcile();log('孩子没能挺过今夜。','bad')}else log('孩子奇迹般退烧了。','good')}}])},
+ {id:'strike',w:3,cond:()=>S.disc>35,run:()=>showModal('工人请愿','工人代表聚在熔炉前：“我们需要喘口气！给我们放半天假，否则别怪我们不干了！”',[
+  {t:'同意休息12小时',d:'停工12小时，不满 -15',fn:()=>{S.strike=12;S.disc-=15}},
+  {t:'严词拒绝',d:'不满 +12，希望 -4',fn:()=>{S.disc+=12;S.hope-=4}}])},
+ {id:'theft',w:2,cond:()=>S.res.food>20,run:()=>showModal('口粮失窃','守卫抓到一个偷口粮的男人，他说家里的孩子已经三天没吃东西了。',[
+  {t:'公开惩戒',d:'不满 -5，希望 -5',fn:()=>{S.disc-=5;S.hope-=5}},
+  {t:'宽恕他并分他一份',d:'口粮 -15，希望 +5，不满 +3',fn:()=>{S.res.food=Math.max(0,S.res.food-15);S.hope+=5;S.disc+=3}}])},
+ {id:'cache',w:2,run:()=>showModal('废弃的补给站','侦察兵报告北方冰原上有一处废弃补给站，可那里随时可能起风暴。',[
+  {t:'派人去搜寻',d:'可能获得大量木材和钢铁，也可能有人回不来',fn:()=>{const w=40+rnd(40),s=15+rnd(20);S.res.wood+=w;S.res.steel+=s;let msg=`搜寻队带回木材${w}、钢铁${s}。`;if(Math.random()<0.3&&S.pop.w-S.sick.w>=2){kill(2,false,'在搜寻中失踪');}log(msg,'good')}},
+  {t:'太危险了，不去',d:'无事发生',fn:()=>{}}])},
+ {id:'wedding',w:2,cond:()=>S.hope<85,run:()=>showModal('冰原上的婚礼','两个年轻人想在熔炉旁举行婚礼，希望城里能拿出一些口粮庆祝。',[
+  {t:'举办婚礼',d:'口粮 -15，希望 +8，不满 -3',ok:()=>S.res.food>=15,fn:()=>{S.res.food-=15;S.hope+=8;S.disc-=3}},
+  {t:'现在不是时候',d:'希望 -2',fn:()=>{S.hope-=2}}])},
+ {id:'frost',w:2,cond:()=>S.pop.w-S.sick.w>0&&outsideTemp(S.day,S.hour)<-35,run:()=>showModal('冻伤','一名工人在严寒中冻坏了双腿，医生建议立刻截肢。',[
+  {t:'截肢保命',d:'他活下来但再也无法工作（工人 -1），希望 -2',fn:()=>{S.pop.w--;reconcile();S.hope-=2}},
+  {t:'冒险保守治疗',d:'一半可能痊愈，一半可能死亡',fn:()=>{if(Math.random()<0.5)log('他挺过来了，重新回到岗位。','good');else kill(1,false,'冻伤恶化不治')}}])},
+ {id:'noise',w:2,cond:()=>S.furnace.lvl>=2,run:()=>showModal('熔炉的异响','熔炉深处传出刺耳的金属摩擦声。工程师建议投入额外的煤炭进行冲洗检修。',[
+  {t:'立即检修',d:'煤炭 -25，熔炉压力清零',ok:()=>S.res.coal>=25,fn:()=>{S.res.coal-=25;S.furnace.stress=0}},
+  {t:'继续运转',d:'熔炉压力 +25',fn:()=>{S.furnace.stress=Math.min(95,S.furnace.stress+25)}}])},
+ {id:'gamble',w:1,cond:()=>S.day>4,run:()=>showModal('地下赌局','有人在帐篷里聚众赌博，用口粮当筹码，输光的人开始闹事。',[
+  {t:'取缔赌局',d:'不满 +5，希望 +3',fn:()=>{S.disc+=5;S.hope+=3}},
+  {t:'睁一只眼闭一只眼',d:'不满 -6，口粮 -10',fn:()=>{S.disc-=6;S.res.food=Math.max(0,S.res.food-10)}}])},
+ {id:'preacher',w:1,run:()=>showModal('守火人','一位自称“守火人”的老人每晚在熔炉旁布道，说火焰会庇佑虔诚的人。聚集的人越来越多。',[
+  {t:'允许他布道',d:'希望 +8，不满 +4',fn:()=>{S.hope+=8;S.disc+=4}},
+  {t:'驱散人群',d:'希望 -3，不满 -4',fn:()=>{S.hope-=3;S.disc-=4}}])},
+ {id:'train',w:2,run:()=>showModal('冰封的运煤车','侦察兵在旧铁轨上发现一节被冰封的运煤车厢。',[
+  {t:'全城出动挖掘',d:'停工6小时，煤炭 +120',fn:()=>{S.strike=Math.max(S.strike,6);S.res.coal+=120}},
+  {t:'只派几个人去',d:'煤炭 +40',fn:()=>{S.res.coal+=40}}])},
+];
+function randomEvent(){
+ const list=EVENTS.filter(e=>!e.cond||e.cond());if(!list.length)return;
+ let tot=list.reduce((a,e)=>a+e.w,0),r=Math.random()*tot;
+ for(const e of list){if(r<e.w){e.run();return}r-=e.w}
+}
+/* ====================== 玩家操作 ====================== */
+function canAfford(c){for(const k in c)if((S.res[k]||0)<c[k])return false;return true}
+function pay(c){for(const k in c)S.res[k]-=c[k]}
+function costStr(c){return Object.entries(c).map(([k,v])=>{const r=RES.find(x=>x[0]===k);return `${r[2]}${v}`}).join(' ')}
+function build(i,type){
+ const d=B[type];if(S.b[i]||!canAfford(d.cost)||(d.req&&!has(d.req)))return;
+ pay(d.cost);S.b[i]={type,staff:d.kind==='work'?{w:0,e:0,c:0}:null};S.stats.built++;
+ if(d.kind==='work')fillStaff(i,d.max);
+ log(`建造了${d.name}`);recalcCache();openSlot(i);
+}
+function demolish(i){const b=S.b[i];if(!b)return;const d=B[b.type];for(const k in d.cost)S.res[k]+=Math.floor(d.cost[k]/2);S.b[i]=null;log(`拆除了${d.name}，回收一半材料`);recalcCache();openSlot(i)}
+function staffOrder(type){return B[type].eng?['e']:['w',...(has('childlabor')?['c']:[]),'e']}
+function addStaff(i){const b=S.b[i],d=B[b.type];if(staffN(b)>=d.max)return false;for(const t of staffOrder(b.type))if(idle(t)>0){b.staff[t]++;return true}return false}
+function removeStaff(i){const b=S.b[i];for(const t of ['c','e','w'])if(b.staff[t]>0&&!(B[b.type].eng&&t!=='e')){b.staff[t]--;return true}return false}
+function fillStaff(i,n){let k=0;while(k<n&&addStaff(i))k++;if(k===0&&n>0)toast('没有空闲且合适的人手','bad');return k}
+function setFurnace(l){S.furnace.lvl=l;if(l===0)S.furnace.over=false;recalcCache();refreshSheet(true)}
+function toggleOver(){if(S.furnace.lvl===0)return toast('先点燃熔炉','bad');S.furnace.over=!S.furnace.over;recalcCache();refreshSheet(true)}
+function signLaw(id){
+ const L=LAWS.find(l=>l.id===id);if(!lawAvailable(L))return;
+ if(L.cost){if(!canAfford(L.cost))return toast('资源不足','bad');pay(L.cost)}
+ S.laws.push(id);S.lawCd=24;
+ const eff={overtime:()=>S.disc+=5,sawdust:()=>S.hope-=3,childlabor:()=>S.hope-=10,snowpit:()=>S.hope-=5,shelter:()=>S.hope+=5,cemetery:()=>S.hope+=5,care:()=>S.hope+=3};
+ eff[id]&&eff[id]();S.hope=clamp(S.hope,0,100);S.disc=clamp(S.disc,0,100);
+ log(`签署法令：${L.name}`,'good');refreshSheet(true);
+}
+function lawAvailable(L){return !S.laws.includes(L.id)&&S.lawCd<=0&&(!L.req||S.laws.includes(L.req))&&!(L.ex&&S.laws.includes(L.ex))}
+function doEmergency(){if(!has('emergency')||S.emergencyCd>0)return;S.emergencyLeft=24;S.emergencyCd=72;S.disc=clamp(S.disc+10,0,100);log('紧急轮班开始！全城连轴转24小时。','bad');refreshSheet(true)}
+function doFestival(){if(!has('festival')||S.festivalCd>0)return;if(S.res.food<20)return toast('口粮不足20','bad');S.res.food-=20;S.hope=clamp(S.hope+8,0,100);S.disc=clamp(S.disc-10,0,100);S.festivalCd=96;log('熔炉旁燃起篝火，人们唱起了旧日的歌。','good');refreshSheet(true)}
+function recalcCache(){const out=outsideTemp(S.day,S.hour);S.cache.temps=slots.map((s,i)=>slotTemp(i,out));S.cache.out=out;
+ const houses=[];S.b.forEach((b,i)=>{if(b&&B[b.type].kind==='house')houses.push({i,t:S.cache.temps[i],cap:B[b.type].cap})});houses.sort((a,b)=>b.t-a.t);
+ let remain=totalPop();const occ=slots.map(()=>0),groups=[0,0,0,0];for(const h of houses){const n=Math.min(remain,h.cap);occ[h.i]=n;remain-=n;groups[level(h.t)]+=n}S.cache.occ=occ;S.cache.homeless=remain;S.cache.groups=groups}
+/* ====================== 日志 / 提示 ====================== */
+function log(msg,cls){if(!S)return;S.log.unshift(`第${S.day}天 ${String(S.hour).padStart(2,'0')}:00 ${msg}`);S.log.length=Math.min(S.log.length,40);toast(msg,cls)}
+function toast(msg,cls){const t=document.createElement('div');t.className='toast '+(cls||'');t.textContent=msg;const box=$('#toasts');box.prepend(t);while(box.children.length>4)box.lastChild.remove();setTimeout(()=>{t.style.opacity=0;setTimeout(()=>t.remove(),600)},3800)}
+/* ====================== 弹窗 ====================== */
+let modalChoices=[];
+function showModal(title,text,choices){
+ modalOpen=true;modalChoices=choices;
+ const m=$('#modal');m.innerHTML=`<div class="mbox"><h2>${title}</h2><p>${text.replace(/\n/g,'<br>')}</p>${choices.map((c,i)=>`<button class="ch" data-ch="${i}" ${c.ok&&!c.ok()?'disabled':''}>${c.t}${c.d?`<small>${c.d}</small>`:''}</button>`).join('')}</div>`;
+ m.classList.remove('hidden');
+}
+function info(title,text){showModal(title,text,[{t:'知道了',fn:()=>{}}])}
+$('#modal').addEventListener('click',e=>{const b=e.target.closest('[data-ch]');if(!b||b.disabled)return;const c=modalChoices[+b.dataset.ch];$('#modal').classList.add('hidden');modalOpen=false;c.fn();S.hope=clamp(S.hope,0,100);S.disc=clamp(S.disc,0,100);recalcCache();refreshSheet(true);updateUI()});
+/* ====================== 面板 ====================== */
+function openSheet(mode,title){sheetMode=mode;$('#sheetTitle').textContent=title;$('#sheet').classList.remove('hidden');refreshSheet(true)}
+function closeSheet(){sheetMode=null;sel=-1;$('#sheet').classList.add('hidden')}
+function openSlot(i){sel=i;const b=S.b[i];openSheet('slot',b?B[b.type].name:`空地 · 第${slots[i].ring+1}环`)}
+let lastSheetHTML='';
+function refreshSheet(force){
+ if(!sheetMode||(!force&&pointerInSheet))return;
+ let h='';
+ if(sheetMode==='slot')h=slotHTML();else if(sheetMode==='furnace')h=furnaceHTML();else if(sheetMode==='laws')h=lawsHTML();else if(sheetMode==='tech')h=techHTML();else if(sheetMode==='pop')h=popHTML();
+ if(sheetMode==='slot'){const b=S.b[sel];$('#sheetTitle').textContent=b?B[b.type].name:`空地 · 第${slots[sel].ring+1}环`}
+ if(h!==lastSheetHTML){$('#sheetBody').innerHTML=h;lastSheetHTML=h}
+}
+function tempBadge(t){const l=level(t);return `<span style="color:${LEVELS[l][1]}">${t}°C（${LEVELS[l][0]}）</span>`}
+function slotHTML(){
+ const i=sel,b=S.b[i],t=S.cache.temps[i];
+ if(!b){
+  const ringInfo=['紧邻熔炉，最温暖','中圈，熔炉热量80%','外圈，熔炉热量仅60%'][slots[i].ring];
+  return `<div class="muted">${ringInfo}。当前此处温度约 ${tempBadge(slotTemp(i,S.cache.out))}</div><div class="grid" style="margin-top:8px">`+BUILD_ORDER.map(k=>{const d=B[k],lock=d.req&&!has(d.req),ok=!lock&&canAfford(d.cost);
+   return `<button class="card ${ok?'':'dis'}" data-act="build" data-k="${k}" ${ok?'':'disabled'}><h4>${d.ic} ${d.name}</h4><div class="cost">${lock?'🔒 需研究：'+TECH.find(x=>x.id===d.req).name:costStr(d.cost)}</div><p>${d.desc}</p></button>`}).join('')+'</div>';
+ }
+ const d=B[b.type];let s=`<div class="muted">${d.desc}</div><div class="kv" style="margin-top:8px"><span>温度</span><span>${tempBadge(t)}</span>`;
+ if(d.kind==='house')s+=`<span>居住</span><span>${S.cache.occ[i]} / ${d.cap} 人</span>`;
+ if(d.kind==='heater')s+=`<span>状态</span><span>${S.furnace.out?'熄灭（无煤）':'运转中，耗煤 2/时'}</span>`;
+ if(d.kind==='work'){
+  const eff=staffEff(b),m=d.tech&&has(d.tech)?1.3:1;let out='';
+  if(d.prod)out=`${(d.rate*eff*d.max*m).toFixed(1)} ${RES.find(r=>r[0]===d.prod)[1]}/工作小时`;
+  else if(b.type==='kitchen')out=`处理 ${(d.rate*eff*d.max).toFixed(1)} 生食/工作小时 → ${(d.rate*eff*d.max*(has('sawdust')?2.5:2)).toFixed(1)} 口粮`;
+  else if(b.type==='lab')out=`${(eff*d.max).toFixed(1)} 研究点/工作小时`;
+  else if(b.type==='med')out=`可救治 ${Math.floor(10*eff*(has('med2')?1.5:1))} 名病人`;
+  s+=`<span>产出</span><span>${out}</span><span>人员</span><span>工人${b.staff.w} 工程师${b.staff.e}${b.staff.c?' 儿童'+b.staff.c:''}</span></div>`;
+  s+=`<div class="staff"><button data-act="rm">−</button><div class="n">${staffN(b)}/${d.max}</div><button data-act="add">+</button><button class="btn" style="width:auto;font-size:13px" data-act="fill">满员</button><button class="btn" style="width:auto;font-size:13px" data-act="clear">清空</button></div>`;
+  s+=`<div class="muted">${d.eng?'仅限工程师。':'优先分配工人'+(has('childlabor')?'，其次儿童':'')+'，最后工程师。'}空闲：工人${idle('w')} · 工程师${idle('e')}${has('childlabor')?' · 儿童'+idle('c'):''}</div>`;
+ } else s+='</div>';
+ s+=`<div class="row" style="margin-top:12px"><button class="btn red" data-act="demolish">拆除（返还一半材料）</button></div>`;
+ return s;
+}
+function furnaceHTML(){
+ const f=S.furnace,use=coalUse(),hrs=use>0?Math.floor(S.res.coal/use):Infinity;
+ return `<div class="kv"><span>外界温度</span><span>${S.cache.out}°C</span><span>熔炉热量</span><span>+${furnaceHeat()}°C（内圈100%·中圈80%·外圈60%）</span><span>耗煤</span><span>${use.toFixed(1)}/小时（含加热器）</span><span>煤炭可撑</span><span>${hrs===Infinity?'—':hrs+' 小时'}</span></div>
+ <div class="muted" style="margin:10px 0 4px">火力档位</div><div class="lvls">${['熄火','一档','二档','三档'].map((n,l)=>`<button data-act="lvl" data-l="${l}" class="${f.lvl===l?'on':''}">${n}<br><small>${l?'+'+[0,15,30,45][l]+'°C · '+[0,4,8,12][l]+'煤/时':'不耗煤'}</small></button>`).join('')}</div>
+ <div class="row" style="margin-top:12px"><button class="btn ${f.over?'red':'pri'}" data-act="over">${f.over?'关闭超载':'开启超载（+15°C，耗煤×1.5）'}</button></div>
+ <div class="muted">熔炉压力 ${Math.round(f.stress)}%（超载时每小时 +${has('valve')?2.5:5}%，关闭后每小时 −4%；达到100%熔炉会爆炸！）</div><div class="pbar" style="margin-top:4px"><i style="width:${f.stress}%;background:${f.stress>70?'#ff4a3a':'#d07a2a'}"></i></div>
+ ${f.out?'<p style="color:#ff8a7a">⚠ 熔炉因缺煤熄灭！尽快增加采煤。</p>':''}`;
+}
+function lawsHTML(){
+ let s=`<div class="muted" style="margin-bottom:6px">${S.lawCd>0?`⏳ 下一条法令需等待 ${S.lawCd} 小时`:'✒ 现在可以签署一条新法令'}。法令一经签署无法撤销，部分法令互斥。</div>`;
+ const acts=[];
+ if(has('emergency'))acts.push(`<button class="btn pri" data-act="emerg" ${S.emergencyCd>0?'disabled':''}>⚡ 紧急轮班${S.emergencyLeft>0?`（进行中 ${S.emergencyLeft}h）`:S.emergencyCd>0?`（冷却 ${S.emergencyCd}h）`:''}</button>`);
+ if(has('festival'))acts.push(`<button class="btn pri" data-act="fest" ${S.festivalCd>0?'disabled':''}>🔥 篝火集会${S.festivalCd>0?`（冷却 ${S.festivalCd}h）`:'（口粮20）'}</button>`);
+ if(acts.length)s+=`<div class="row">${acts.join('')}</div>`;
+ s+='<div class="laws">'+[0,1].map(br=>`<div><div class="brt">${br?'❤ 人心所向':'⛓ 生存之道'}</div>`+LAWS.filter(l=>l.br===br).map(L=>{
+  const signed=S.laws.includes(L.id),blocked=(L.ex&&S.laws.includes(L.ex))||(L.req&&!S.laws.includes(L.req));
+  const note=signed?'<span class="tag">已签署</span>':L.ex&&S.laws.includes(L.ex)?'<span class="tag">互斥</span>':L.req&&!S.laws.includes(L.req)?'<span class="tag">需先签“'+LAWS.find(x=>x.id===L.req).name+'”</span>':'';
+  return `<div class="law ${signed?'signed':blocked?'lock':''}"><h4>${L.name}${note}</h4><p>${L.desc}</p>${!signed&&!blocked?`<button class="btn" data-act="law" data-id="${L.id}" ${lawAvailable(L)&&(!L.cost||canAfford(L.cost))?'':'disabled'}>签署</button>`:''}</div>`}).join('')+'</div>').join('')+'</div>';
+ return s;
+}
+function techHTML(){
+ const cur=S.research&&TECH.find(t=>t.id===S.research);
+ let s=`<div class="muted">研究点：<b style="color:#ffd2a0">${Math.floor(S.rp)}</b>（工作坊里的工程师产出研究点，未用完的点数会保留）</div>`;
+ if(cur)s+=`<div style="margin:8px 0">正在研究：${cur.name}<div class="pbar"><i style="width:${Math.min(100,S.rp/cur.cost*100)}%"></i></div></div>`;
+ if(!S.b.some(b=>b&&b.type==='lab'))s+=`<p style="color:#ffcf8a">还没有工作坊——先在空地上建造一座。</p>`;
+ s+='<div class="grid" style="margin-top:6px">'+TECH.map(t=>{const done=S.tech.includes(t.id),lock=t.req&&!S.tech.includes(t.req),on=S.research===t.id;
+  return `<div class="card ${done||lock?'dis':''}"><h4>${t.name}${done?'<span class="tag">已完成</span>':''}</h4><div class="cost">🔬 ${t.cost}</div><p>${t.desc}</p>${!done&&!lock?`<button class="btn ${on?'pri':''}" data-act="research" data-id="${t.id}">${on?'研究中…':'开始研究'}</button>`:lock?'<p>需先完成前置研究</p>':''}</div>`}).join('')+'</div>';
+ return s;
+}
+function popHTML(){
+ const c=S.cache,P=totalPop(),cap=housingCap();
+ const foodNeed=P+(has('care')?totalSick():0);
+ return `<div class="kv">
+ <span>总人口</span><span>${P}（工人${S.pop.w} · 工程师${S.pop.e} · 儿童${S.pop.c}）</span>
+ <span>病人</span><span>${totalSick()}（救治中 ${c.treated||0}，无人照料 ${c.untreated||0}）</span>
+ <span>空闲人手</span><span>工人${idle('w')} · 工程师${idle('e')}${has('childlabor')?' · 儿童'+idle('c'):''}</span>
+ <span>住所</span><span>${Math.min(P,cap)}/${cap} 床位${c.homeless?`，<b style="color:#ff8a7a">${c.homeless}人露宿</b>`:''}</span>
+ <span>住所温度</span><span>${LEVELS.map((l,i)=>`<span style="color:${l[1]}">${l[0]}${c.groups[i]}</span>`).join(' · ')}</span>
+ <span>每日口粮需求</span><span>${foodNeed}（12:00、19:00 各吃一半）</span>
+ <span>每日耗煤</span><span>约 ${Math.round(coalUse()*24)}</span>
+ <span>工作时间</span><span>08:00–${has('overtime')?'22':'18'}:00</span>
+ <span>已故</span><span>${S.stats.deaths}</span></div>
+ <div class="row"><button class="btn" data-act="save">💾 保存</button><button class="btn red" data-act="restart">重新开始</button></div>
+ <div class="log">${S.log.map(x=>`<div>${x}</div>`).join('')}</div>`;
+}
+$('#sheetBody').addEventListener('pointerdown',()=>pointerInSheet=true);
+window.addEventListener('pointerup',()=>setTimeout(()=>pointerInSheet=false,50));
+window.addEventListener('pointercancel',()=>pointerInSheet=false);
+$('#sheetBody').addEventListener('click',e=>{
+ const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const a=el.dataset.act;
+ if(a==='build')build(sel,el.dataset.k);
+ else if(a==='add'){if(!addStaff(sel))toast(staffN(S.b[sel])>=B[S.b[sel].type].max?'已满员':'没有空闲且合适的人手','bad')}
+ else if(a==='rm')removeStaff(sel);
+ else if(a==='fill')fillStaff(sel,B[S.b[sel].type].max);
+ else if(a==='clear')while(removeStaff(sel));
+ else if(a==='demolish')demolish(sel);
+ else if(a==='lvl')setFurnace(+el.dataset.l);
+ else if(a==='over')toggleOver();
+ else if(a==='law')signLaw(el.dataset.id);
+ else if(a==='emerg')doEmergency();
+ else if(a==='fest')doFestival();
+ else if(a==='research'){S.research=S.research===el.dataset.id?null:el.dataset.id}
+ else if(a==='save'){save();toast('已保存','good')}
+ else if(a==='restart'){if(confirm('确定放弃当前城市，重新开始吗？')){localStorage.removeItem(SAVE_KEY);closeSheet();startGame(true)}return}
+ refreshSheet(true);updateUI();
+});
+$('#sheetClose').onclick=closeSheet;
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{if(!S||S.ended)return;const m=b.dataset.open;if(sheetMode===m){closeSheet();return}sel=-1;openSheet(m,{furnace:'🔥 熔炉',laws:'📜 法典',tech:'⚙️ 研究',pop:'👥 人口与记录'}[m])});
+$('#heatBtn').onclick=()=>{heatView=!heatView;$('#heatBtn').classList.toggle('on',heatView)};
+document.querySelectorAll('[data-spd]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.spd));
+function setSpeed(s){speed=s;document.querySelectorAll('[data-spd]').forEach(x=>x.classList.toggle('on',+x.dataset.spd===s))}
+window.addEventListener('keydown',e=>{if(!S||S.ended)return;if(e.code==='Space'){e.preventDefault();setSpeed(speed?0:1)}else if('0123'.includes(e.key))setSpeed(+e.key);else if(e.key==='Escape')closeSheet();else if(e.key==='h')$('#heatBtn').click()});
+/* ====================== 顶栏 ====================== */
+function updateUI(){
+ if(!S)return;
+ const P=totalPop();
+ const cells=RES.map(([k,n,ic])=>{const v=Math.floor(S.res[k]),d=lastDelta[k]||0;
+  const low=(k==='coal'&&coalUse()>0&&S.res.coal<coalUse()*12)||(k==='food'&&S.res.food+S.res.raw<P*0.6);
+  return `<div class="r ${low?'low':''}"><div><span class="ic">${ic}</span> <span class="v">${v}</span></div><div class="d ${d>0.05?'pos':d<-0.05?'neg':''}">${n} ${d>0.05?'+':''}${Math.abs(d)>=0.05?d.toFixed(1):'±0'}/h</div></div>`});
+ cells.push(`<div class="r ${S.cache.homeless?'low':''}"><div><span class="ic">👥</span> <span class="v">${P}</span></div><div class="d">病${totalSick()} 闲${idle('w')+idle('e')}</div></div>`);
+ const html=cells.join('');if($('#res')._h!==html){$('#res').innerHTML=html;$('#res')._h=html}
+ $('#clock').textContent=`第${S.day}/${DAYS}天 ${String(S.hour).padStart(2,'0')}:00`;
+ const o=S.cache.out;$('#temp').textContent=`${o}°C`;$('#temp').style.background=o<-60?'#2a2f7a':o<-40?'#1d3d73':'#13314f';
+ $('#hopeV').textContent=Math.round(S.hope);$('#discV').textContent=Math.round(S.disc);
+ $('#hopeF').style.width=S.hope+'%';$('#discF').style.width=S.disc+'%';
+ const al=[];const c=S.cache;
+ if(S.furnace.out)al.push(['熔炉熄灭！缺煤','']);
+ if(S.furnace.stress>=60)al.push([`熔炉压力 ${Math.round(S.furnace.stress)}%`,'']);
+ if(c.homeless)al.push([`${c.homeless}人无家可归`,'']);
+ if(c.untreated)al.push([`${c.untreated}名病人无人照料`,'warn']);
+ if(S.hungryFrac>0)al.push(['有人在挨饿','']);
+ if(S.hope<25)al.push(['希望濒临崩溃','']);
+ if(S.disc>75)al.push(['不满即将爆发','']);
+ if(S.strike>0)al.push([`停工中 ${S.strike}h`,'warn']);
+ if(S.emergencyLeft>0)al.push([`紧急轮班 ${S.emergencyLeft}h`,'warn']);
+ if(S.day>=28)al.push(['大风暴！','']);
+ const ah=al.map(a=>`<div class="al ${a[1]}">⚠ ${a[0]}</div>`).join('');if($('#alerts')._h!==ah){$('#alerts').innerHTML=ah;$('#alerts')._h=ah}
+ const hint=$('#hint');hint.style.display=sheetMode?'none':'block';
+ if(!sheetMode){let t='点击空地建造，点击建筑分配工人，点击中央熔炉调节火力';
+  if(S.cache.homeless)t=`还有${S.cache.homeless}人露宿：点击靠近熔炉的空地，搭建帐篷`;
+  else if(!S.b.some(b=>b&&b.type==='coal'))t='建一座采煤站，否则熔炉很快会熄灭';
+  else if(!S.b.some(b=>b&&b.type==='hunt'))t='建猎人小屋获取生食，再建厨房做成口粮';
+  else if(!S.b.some(b=>b&&b.type==='kitchen'))t='建一座厨房，把生食做成口粮';
+  else if(!S.b.some(b=>b&&b.type==='lab'))t='建工作坊研究科技，挺过即将到来的寒潮';
+  hint.textContent=t}
+}
+/* ====================== 存档 ====================== */
+function save(){if(S&&!S.ended)try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.started&&!s.ended&&s.b&&s.b.length===slots.length)return s}catch(e){}return null}
+/* ====================== 画面 ====================== */
+const cv=$('#cv'),ctx=cv.getContext('2d');let W=0,H=0,DPR=1,CX=0,CY=0,SC=1;
+let tCX=0,tCY=0,tSC=1;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*DPR;cv.height=H*DPR;makeGround();layout(true)}
+function layout(snap){
+ let aw=W,ah=H;const sh=$('#sheet');
+ if(sheetMode){if(window.innerWidth>=900)aw=Math.max(200,W-sh.offsetWidth);else ah=Math.max(180,H-sh.offsetHeight)}
+ tCX=aw/2;tCY=ah/2;tSC=Math.min(aw,ah)/2/0.9;
+ if(snap){CX=tCX;CY=tCY;SC=tSC}
+}
+let ground=null;
+function makeGround(){ground=document.createElement('canvas');ground.width=Math.max(1,W*DPR);ground.height=Math.max(1,H*DPR);const g=ground.getContext('2d');g.scale(DPR,DPR);
+ for(let i=0;i<W*H/90;i++){g.fillStyle=`rgba(${200+rnd(55)},${215+rnd(40)},255,${Math.random()*0.12})`;g.fillRect(Math.random()*W,Math.random()*H,1+Math.random()*2,1)}
+}
+function drawGround(){
+ const gr=ctx.createRadialGradient(CX,CY,0,CX,CY,Math.max(W,H)*0.7);gr.addColorStop(0,'#3a4a5c');gr.addColorStop(0.35,'#22303f');gr.addColorStop(1,'#0a1018');ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
+ if(ground)ctx.drawImage(ground,0,0,W,H);
+ ctx.strokeStyle='rgba(120,90,60,0.25)';ctx.lineWidth=Math.max(2,SC*0.012);slots.forEach(s=>{ctx.beginPath();ctx.moveTo(CX,CY);ctx.lineTo(CX+s.x*SC,CY+s.y*SC);ctx.stroke()});
+ ctx.strokeStyle='rgba(160,190,220,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,6]);RINGS.forEach(R=>{ctx.beginPath();ctx.arc(CX,CY,R.r*SC,0,Math.PI*2);ctx.stroke()});ctx.setLineDash([]);
+}
+window.addEventListener('resize',resize);
+const flakes=[];for(let i=0;i<160;i++)flakes.push({x:Math.random(),y:Math.random(),r:0.5+Math.random()*2,v:0.3+Math.random()*0.7,p:Math.random()*6});
+const smoke=[];
+function px(s){return [CX+s.x*SC,CY+s.y*SC]}
+function drawBuilding(i,b,t,now){
+ const [x,y]=px(slots[i]),d=B[b.type],u=SC*0.075,c=S.cache;
+ ctx.save();ctx.translate(x,y);
+ ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.ellipse(0,u*0.9,u*1.5,u*0.45,0,0,Math.PI*2);ctx.fill();
+ const lit=(d.kind==='house'&&c.occ[i]>0)||(d.kind==='work'&&staffN(b)>0&&(c.working||b.type==='med'))||(d.kind==='heater'&&!S.furnace.out);
+ const win=lit?`rgba(255,${170+Math.sin(now/300+i)*20},80,0.95)`:'#1a2230';
+ if(b.type==='tent'){
+  ctx.fillStyle='#6b5a46';ctx.beginPath();ctx.moveTo(-u*1.2,u*0.8);ctx.lineTo(0,-u*0.9);ctx.lineTo(u*1.2,u*0.8);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e9f1f8';ctx.beginPath();ctx.moveTo(-u*0.45,-u*0.25);ctx.lineTo(0,-u*0.9);ctx.lineTo(u*0.45,-u*0.25);ctx.closePath();ctx.fill();
+  ctx.fillStyle=win;ctx.beginPath();ctx.moveTo(-u*0.3,u*0.8);ctx.lineTo(0,u*0.05);ctx.lineTo(u*0.3,u*0.8);ctx.fill();
+ } else if(d.kind==='heater'){
+  ctx.fillStyle='#3d4652';ctx.fillRect(-u*0.4,-u*1.1,u*0.8,u*1.9);
+  ctx.fillStyle=win;ctx.beginPath();ctx.arc(0,-u*0.2,u*0.32,0,Math.PI*2);ctx.fill();
+  if(lit){const g=ctx.createRadialGradient(0,0,0,0,0,u*3);g.addColorStop(0,'rgba(255,140,40,0.28)');g.addColorStop(1,'rgba(255,140,40,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,u*3,0,Math.PI*2);ctx.fill()}
+  ctx.fillStyle='#e9f1f8';ctx.fillRect(-u*0.5,-u*1.25,u,u*0.2);
+ } else {
+  const col={house:'#5a4636',coal:'#3b3f47',saw:'#5d4a33',steel:'#4a4f5a',hunt:'#4e5b45',kitchen:'#6a4a3a',med:'#5a6470',lab:'#3f4f66'}[b.type]||'#555';
+  const wdt=u*2.1,hh=u*1.2;
+  if(d.kind==='work'&&b.type!=='hunt'){ctx.fillStyle='#2b2f36';ctx.fillRect(u*0.45,-hh-u*0.9,u*0.32,u*1.1)}
+  ctx.fillStyle=col;ctx.fillRect(-wdt/2,-hh/2+u*0.2,wdt,hh);
+  ctx.fillStyle='#e9f1f8';ctx.beginPath();ctx.moveTo(-wdt/2-u*0.15,-hh/2+u*0.25);ctx.lineTo(0,-hh/2-u*0.55);ctx.lineTo(wdt/2+u*0.15,-hh/2+u*0.25);ctx.closePath();ctx.fill();
+  ctx.fillStyle=win;ctx.fillRect(-wdt*0.33,u*0.05,u*0.4,u*0.35);ctx.fillRect(wdt*0.33-u*0.4,u*0.05,u*0.4,u*0.35);
+  if(lit&&d.kind==='work'&&b.type!=='hunt'&&Math.random()<0.06)smoke.push({x:x+u*0.6,y:y-hh-u*0.9,vx:0.2,vy:-0.4,r:u*0.2,a:0.2,life:1});
+  if(b.type==='med'){ctx.fillStyle='#e04a3a';ctx.fillRect(-u*0.1,-u*0.45,u*0.2,u*0.5);ctx.fillRect(-u*0.25,-u*0.3,u*0.5,u*0.2)}
+ }
+ ctx.font=`${Math.round(u*0.85)}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+ if(d.kind!=='heater'&&b.type!=='tent'&&b.type!=='house'&&b.type!=='med')ctx.fillText(d.ic,0,-u*1.35);
+ ctx.font=`bold ${Math.max(9,Math.round(u*0.55))}px sans-serif`;
+ let lab=d.kind==='house'?`${c.occ[i]}/${d.cap}`:d.kind==='work'?`${staffN(b)}/${d.max}`:'';
+ if(lab){ctx.fillStyle='rgba(5,10,16,0.75)';const tw=ctx.measureText(lab).width+6;ctx.fillRect(-tw/2,u*1.0,tw,u*0.7);ctx.fillStyle=d.kind==='work'&&staffN(b)===0?'#ff8a7a':'#e6eef6';ctx.fillText(lab,0,u*1.36)}
+ ctx.restore();
+}
+function drawFurnace(now){
+ const u=SC*0.11,f=S.furnace,heat=furnaceHeat(),on=heat>0;
+ if(on){const rr=SC*(0.25+heat/100*0.75);const g=ctx.createRadialGradient(CX,CY,0,CX,CY,rr);const a=0.18+heat/400;g.addColorStop(0,`rgba(255,150,50,${a})`);g.addColorStop(0.5,`rgba(255,110,30,${a*0.45})`);g.addColorStop(1,'rgba(255,100,30,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(CX,CY,rr,0,Math.PI*2);ctx.fill()}
+ ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(CX,CY+u*0.6,u*1.4,u*0.5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#2c323b';ctx.beginPath();ctx.arc(CX,CY,u*1.05,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#59616d';ctx.lineWidth=u*0.12;ctx.stroke();
+ for(let k=0;k<8;k++){const a=k/8*Math.PI*2+now/4000;ctx.fillStyle='#4a525d';ctx.beginPath();ctx.arc(CX+Math.cos(a)*u*1.05,CY+Math.sin(a)*u*1.05,u*0.14,0,Math.PI*2);ctx.fill()}
+ const fl=on?0.75+Math.sin(now/120)*0.1+Math.random()*0.08:0.15;
+ const core=f.over&&on?`rgba(255,${80+Math.sin(now/90)*40},40,${fl})`:`rgba(255,${150+f.lvl*20},60,${fl})`;
+ const g2=ctx.createRadialGradient(CX,CY,0,CX,CY,u*0.75);g2.addColorStop(0,on?'#fff2c0':'#333');g2.addColorStop(0.5,core);g2.addColorStop(1,'rgba(80,30,10,0.9)');
+ ctx.fillStyle=g2;ctx.beginPath();ctx.arc(CX,CY,u*0.72,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#1e2228';ctx.fillRect(CX-u*0.26,CY-u*1.75,u*0.52,u*1.2);ctx.fillStyle='#e9f1f8';ctx.fillRect(CX-u*0.32,CY-u*1.85,u*0.64,u*0.16);
+ if(on&&Math.random()<0.35+heat/200)smoke.push({x:CX+(Math.random()-0.5)*u*0.3,y:CY-u*1.85,vx:0.3+Math.random()*0.3,vy:-0.5-Math.random()*0.4,r:u*0.2,a:0.15,life:1});
+ if(f.stress>60){ctx.strokeStyle=`rgba(255,60,40,${0.4+Math.sin(now/100)*0.3})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(CX,CY,u*1.3,0,Math.PI*2);ctx.stroke()}
+}
+let lastFrame=0;
+function draw(now){
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+ layout(false);const k=0.2;CX+=(tCX-CX)*k;CY+=(tCY-CY)*k;SC+=(tSC-SC)*k;
+ drawGround();
+ const c=S.cache;
+ slots.forEach((s,i)=>{const [x,y]=px(s),u=SC*0.075;
+  if(heatView){const l=level(S.b[i]?c.temps[i]:slotTemp(i,c.out));ctx.fillStyle=LEVELS[l][1]+'55';ctx.beginPath();ctx.arc(x,y,u*1.75,0,Math.PI*2);ctx.fill()}
+  if(!S.b[i]){ctx.strokeStyle=i===sel?'#ffb060':'rgba(200,220,240,0.28)';ctx.lineWidth=i===sel?2.5:1.2;ctx.setLineDash([3,4]);ctx.beginPath();ctx.arc(x,y,u*1.25,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+   ctx.fillStyle='rgba(200,220,240,0.35)';ctx.font=`${Math.round(u*0.9)}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+',x,y)}
+ });
+ drawFurnace(now);
+ const order=slots.map((s,i)=>i).sort((a,b)=>slots[a].y-slots[b].y);
+ for(const i of order){if(S.b[i])drawBuilding(i,S.b[i],c.temps[i],now);if(i===sel&&S.b[i]){const [x,y]=px(slots[i]);ctx.strokeStyle='#ffb060';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,SC*0.075*1.7,0,Math.PI*2);ctx.stroke()}}
+ if(heatView){ctx.font=`bold ${Math.max(9,Math.round(SC*0.04))}px sans-serif`;ctx.textAlign='center';slots.forEach((s,i)=>{const [x,y]=px(s);const t=S.b[i]?c.temps[i]:slotTemp(i,c.out);ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(x-18,y-SC*0.15,36,15);ctx.fillStyle=LEVELS[level(t)][1];ctx.fillText(t+'°',x,y-SC*0.15+8)})}
+ // 烟
+ for(let k=smoke.length-1;k>=0;k--){const p=smoke[k];p.x+=p.vx+windX()*0.5;p.y+=p.vy;p.r+=0.15;p.life-=0.006;if(p.life<=0){smoke.splice(k,1);continue}ctx.fillStyle=`rgba(70,75,85,${p.a*p.life})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()}
+ if(smoke.length>220)smoke.splice(0,smoke.length-220);
+ // 昼夜
+ const h=S.hour+(S.acc/HOUR_MS);let dark=0;if(h<6||h>=21)dark=0.45;else if(h<8)dark=0.45*(8-h)/2;else if(h>=19)dark=0.45*(h-19)/2;
+ if(S.day>=28)dark=Math.max(dark,0.25);
+ if(dark>0){ctx.fillStyle=`rgba(4,8,20,${dark})`;ctx.fillRect(0,0,W,H)}
+ // 雪
+ const storm=S.day>=28,cold=c.out<-40,n=storm?160:cold?110:70,wx=windX();
+ ctx.fillStyle='rgba(235,243,255,0.85)';
+ for(let k=0;k<n;k++){const f=flakes[k];f.y+=f.v*(storm?0.009:0.0025)*(speed?1:0.4);f.x+=(wx*0.004+Math.sin(now/1000+f.p)*0.0006);if(f.y>1)f.y-=1;if(f.x>1)f.x-=1;if(f.x<0)f.x+=1;
+  ctx.globalAlpha=0.4+f.r/4;ctx.beginPath();if(storm){ctx.ellipse(f.x*W,f.y*H,f.r*2.5,f.r*0.7,0.3,0,Math.PI*2)}else ctx.arc(f.x*W,f.y*H,f.r,0,Math.PI*2);ctx.fill()}
+ ctx.globalAlpha=1;
+ if(storm){ctx.fillStyle=`rgba(220,230,245,${0.10+Math.sin(now/700)*0.04})`;ctx.fillRect(0,0,W,H)}
+}
+function windX(){return S&&S.day>=28?2.2:S&&S.cache.out<-40?0.8:0.25}
+cv.addEventListener('pointerdown',e=>{
+ if(!S||S.ended||modalOpen)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+ if(Math.hypot(x-CX,y-CY)<SC*0.16){sel=-1;openSheet('furnace','🔥 熔炉');return}
+ let best=-1,bd=SC*0.13;slots.forEach((s,i)=>{const [sx,sy]=px(s);const d=Math.hypot(sx-x,sy-y);if(d<bd){bd=d;best=i}});
+ if(best>=0)openSlot(best);else closeSheet();
+});
+/* ====================== 主循环 ====================== */
+let prevT=performance.now(),uiT=0;
+function loop(now){
+ const dt=Math.min(250,now-prevT);prevT=now;
+ if(S&&!S.ended){
+  if(speed>0&&!modalOpen){S.acc+=dt*speed;let guard=0;while(S.acc>=HOUR_MS&&!S.ended&&!modalOpen&&guard++<5){S.acc-=HOUR_MS;processHour();refreshSheet(false)}}
+  uiT+=dt;if(uiT>200){uiT=0;updateUI()}
+ }
+ if(S)draw(now);
+ requestAnimationFrame(loop);
+}
+/* ====================== 开始 / 结束 ====================== */
+function showIntro(){
+ const saved=load();const sc=$('#screen');sc.classList.remove('hidden');
+ sc.innerHTML=`<div class="scr"><h1>冰原余烬</h1><div class="sub">—— 熔炉不熄，人心不灭 ——</div>
+ <div class="txt">世界被永恒的寒冬吞没。你带领最后的幸存者来到一座巨大的蒸汽<b>熔炉</b>旁，这是冰原上唯一的火种。<br><br>
+ <b>目标：</b>坚持 <b>${DAYS}</b> 天，熬过三次寒潮和最后的<b>大风暴</b>。<br>
+ <b>操作：</b><br>① 点击熔炉周围的<b>空地</b>建造帐篷、采煤站、猎人小屋、厨房等；<br>② 点击建筑，用 <b>＋ / −</b> 分配工人；<br>③ 点击中央<b>熔炉</b>调节火力：火越大越暖，耗煤越多，超载有爆炸风险；<br>④ <b>法典</b>里签署法令，<b>研究</b>里解锁科技，<b>热力</b>查看各处温度；<br>⑤ 底部可暂停或 1×/2×/3× 加速（电脑：空格暂停，数字键调速）。<br><br>
+ 离熔炉越远越冷。寒冷让人生病，病人需要医疗站的工程师。<b>希望</b>归零或<b>不满</b>爆表，你将被赶出城市。</div>
+ <div class="btns">${saved?`<button class="btn pri" id="contBtn">继续（第${saved.day}天）</button>`:''}<button class="btn ${saved?'':'pri'}" id="newBtn">新的城市</button></div></div>`;
+ $('#newBtn').onclick=()=>startGame(true);
+ if(saved)$('#contBtn').onclick=()=>{S=saved;S.ended=false;begin()};
+}
+function startGame(fresh){S=newState();begin();log('人们围着熔炉瑟瑟发抖……先给大家搭起帐篷吧。')}
+function begin(){$('#screen').classList.add('hidden');$('#modal').classList.add('hidden');modalOpen=false;closeSheet();recalcCache();setSpeed(1);updateUI()}
+function endGame(why){
+ S.ended=true;localStorage.removeItem(SAVE_KEY);closeSheet();$('#modal').classList.add('hidden');modalOpen=false;
+ const T={win:['黎明','大风暴终于停歇。冰原上的风变得温柔，熔炉依旧在燃烧。你的人民活下来了——人们会在很多年后，仍在火边讲述这段日子。'],
+  explode:['熔炉爆炸','一声巨响撕裂了夜空。超载的熔炉炸成了一团火球，城市的心脏停止了跳动。'],
+  dead:['寂静之城','最后一个人倒在雪中。熔炉旁再无人添煤，冰原重归寂静。'],
+  hope:['希望熄灭','人们不再相信这座城市还有未来。他们把你赶出城门，独自走进了暴风雪。'],
+  disc:['城市叛乱','愤怒的人群冲进了指挥所。你被铐上镣铐，扔到了城外的冰原上。']}[why];
+ const sc=$('#screen');sc.classList.remove('hidden');
+ sc.innerHTML=`<div class="scr"><h1 style="${why==='win'?'':'color:#ffb0a0;text-shadow:0 0 24px #ff3a2a99'}">${T[0]}</h1><div class="sub">${why==='win'?'你赢了':'游戏结束'} · 第${Math.min(S.day,DAYS)}天</div>
+ <div class="txt">${T[1]}</div>
+ <div class="stats"><div>幸存者<b>${totalPop()}</b></div><div>死亡<b>${S.stats.deaths}</b></div><div>最高人口<b>${S.stats.maxPop}</b></div><div>最低气温<b>${S.stats.minTemp}°C</b></div><div>签署法令<b>${S.laws.length}</b></div><div>完成研究<b>${S.tech.length}</b></div></div>
+ <div class="btns"><button class="btn pri" id="againBtn">再来一局</button></div></div>`;
+ $('#againBtn').onclick=()=>startGame(true);
+}
+window.addEventListener('beforeunload',save);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+resize();showIntro();
+S=S||null;
+requestAnimationFrame(loop);
+// 测试钩子
+window.__game={get S(){return S},set S(v){S=v},processHour,build,addStaff,fillStaff,setFurnace,toggleOver,signLaw,doEmergency,doFestival,startGame,B,TECH,LAWS,slots,outsideTemp,get modalOpen(){return modalOpen},modalChoices:()=>modalChoices,pickChoice:i=>{const b=document.querySelector(`#modal [data-ch="${i}"]`);b&&b.click()},setSpeed,openSlot,slotScreen:i=>{const r=cv.getBoundingClientRect();layout(true);const [x,y]=px(slots[i]);return {x:r.left+x,y:r.top+y}},openSheet,recalcCache,totalPop};
+</script>
+</body>
+</html>
