@@ -49,10 +49,12 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 #helpBtn{width:44px;height:44px;flex:none;border-radius:50%;font-family:var(--serif);font-size:20px;font-weight:700;color:#2a1c08;background:radial-gradient(circle at 35% 30%,#f2d595,#b38443 60%,#6d4f22);box-shadow:0 2px 6px #000,inset 0 -2px 3px rgba(0,0,0,.35)}
 /* ---------- feeds ---------- */
 #alerts{position:absolute;left:6px;z-index:9;display:flex;flex-direction:column;gap:5px;max-width:58%}
-.al{display:flex;align-items:center;gap:6px;min-height:40px;padding:6px 10px 6px 8px;border-radius:8px;font-size:12.5px;line-height:1.25;text-align:left;background:linear-gradient(90deg,rgba(70,18,14,.94),rgba(40,12,10,.86));border:1px solid #b8432f;color:#ffd9cf;box-shadow:0 2px 8px #0008;animation:alin .35s}
+.al{display:flex;align-items:center;gap:6px;min-height:40px;padding:6px 10px 6px 8px;border-radius:8px;font-size:12.5px;line-height:1.25;text-align:left;background:linear-gradient(90deg,rgba(70,18,14,.94),rgba(40,12,10,.86));border:1px solid #b8432f;color:#ffd9cf;box-shadow:0 2px 8px #0008;animation:none;--a:alin .35s}
 .al.warn{background:linear-gradient(90deg,rgba(66,50,14,.94),rgba(40,30,8,.86));border-color:#c0973a;color:#ffefc4}
 .al.info{background:linear-gradient(90deg,rgba(18,40,62,.94),rgba(10,24,38,.86));border-color:#4f86b8;color:#d6ecff}
 .al b{font-size:15px}.al .go{margin-left:auto;opacity:.75;font-size:11px;white-space:nowrap}
+
+.al.nw{animation:alin .35s}
 @keyframes alin{from{transform:translateX(-30px);opacity:0}}
 #toasts{position:absolute;right:6px;z-index:9;display:flex;flex-direction:column;gap:4px;align-items:flex-end;pointer-events:none;max-width:44%}
 .toast{background:rgba(14,19,26,.9);border:1px solid #4a5a6c;border-left:3px solid #8aa0b8;font-size:12px;padding:5px 9px;border-radius:6px;animation:tin .3s;transition:opacity .6s;text-align:right}
@@ -188,7 +190,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 #obj.hidden{display:none}
 #obj.flash{box-shadow:0 0 0 2px #7ee07e,0 0 18px rgba(120,230,120,.6)}
 #obj .oh{display:flex;align-items:center;gap:6px;width:100%;min-height:40px;padding:6px 10px;color:#ffe3bf;font-family:var(--serif);text-align:left}
-#obj .oh b{font-size:13.5px}#obj .oh span{margin-left:auto;color:#c9b48c}#obj .oh .car{margin-left:4px}
+#obj .oh b{font-size:13.5px;white-space:nowrap}
+#obj .oh.one .ot{margin-left:4px;color:#ffe9a8;font-family:var(--sans);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#obj .oh.one em{font-style:normal;color:#ffc477}
+#obj .alldone .btn{margin-left:6px;min-height:32px}#obj .oh span{margin-left:auto;color:#c9b48c}#obj .oh .car{margin-left:4px}
 #obj ul{list-style:none;margin:0;padding:0 10px 8px}
 #obj li{display:flex;gap:6px;align-items:baseline;padding:3px 0;line-height:1.35;color:#dbe4ee}
 #obj li i{font-style:normal;width:14px;flex:none;color:#c9b48c}
@@ -306,7 +310,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 'use strict';
 /* ====================== 数据定义 ====================== */
 const $=s=>document.querySelector(s);
-const HOUR_MS=2000, DAYS=30, SAVE_KEY='bingyuan-yujin-save-v1';
+const HOUR_MS=3000, DAYS=30, SAVE_KEY='bingyuan-yujin-save-v1';
 const RES=[['coal','煤炭','🪨'],['wood','木材','🪵'],['steel','钢铁','⚙️'],['raw','生食','🥩'],['food','口粮','🍲']];
 const TN={w:'工人',e:'工程师',c:'儿童'};
 const RINGS=[{n:6,r:0.30,f:1.0},{n:10,r:0.535,f:0.8},{n:14,r:0.77,f:0.6}];
@@ -485,9 +489,9 @@ function processHour(){
  // 时间推进
  S.hour++;
  if(S.hour>=24){S.hour=0;S.day++;if(S.day>maxDays())return S.mode==='camp'?campTimeUp():endGame('win');log(`—— 第${S.day}天 ——`);save()}
- if(S.mode==='camp')campHour();else scripted();
+ if(S.mode==='camp')campHour();else{scripted();chainTick()}
  const T=(S.day-1)*24+S.hour;
- if(!modalOpen&&T>=S.nextEvent&&S.hour>=9&&S.hour<=20){S.nextEvent=T+(S.mode==='camp'?CH[S.ch].evGap:28)+rnd(20);randomEvent()}
+ if(!modalOpen&&T>=S.nextEvent&&S.hour>=9&&S.hour<=20){S.nextEvent=T+(S.mode==='camp'?24+rnd(14):22+rnd(16));randomEvent()}
 }
 /* ====================== 事件 ====================== */
 function scripted(){
@@ -557,7 +561,7 @@ function build(i,type){
 }
 function demolish(i){const b=S.b[i];if(!b)return;const d=B[b.type];for(const k in d.cost)S.res[k]+=Math.floor(d.cost[k]/2);S.b[i]=null;log(`拆除了${d.name}，回收一半材料`);recalcCache();closeSheet()}
 function staffOrder(type){return B[type].eng?['e']:['w',...(has('childlabor')?['c']:[]),'e']}
-function addStaff(i){const b=S.b[i],d=B[b.type];if(staffN(b)>=d.max)return false;for(const t of staffOrder(b.type))if(idle(t)>0){b.staff[t]++;return true}return false}
+function addStaff(i){const b=S.b[i],d=B[b.type];if(staffN(b)>=d.max)return false;for(const t of staffOrder(b.type))if(idle(t)>0){b.staff[t]++;return true}if(d.eng){const j=S.b.findIndex(x=>x&&x.staff&&!B[x.type].eng&&x.staff.e>0);if(j>=0){S.b[j].staff.e--;if(idle('w')>0)S.b[j].staff.w++;b.staff.e++;return true}}return false}
 function removeStaff(i){const b=S.b[i];for(const t of ['c','e','w'])if(b.staff[t]>0&&!(B[b.type].eng&&t!=='e')){b.staff[t]--;return true}return false}
 function fillStaff(i,n){let k=0;while(k<n&&addStaff(i))k++;if(k===0&&n>0)toast('没有空闲且合适的人手','bad');return k}
 function setFurnace(l){S.furnace.lvl=l;if(l===0)S.furnace.over=false;recalcCache();refreshSheet(true)}
@@ -582,8 +586,8 @@ function log(msg,cls){if(!S)return;S.log.unshift(`第${S.day}天 ${String(S.hour
 const SKIN_KEY='bingyuan-yujin-skin';
 let SKIN=(()=>{const q=new URLSearchParams(location.search).get('skin');if(q==='dog'||q==='human')return q;const v=localStorage.getItem(SKIN_KEY);return v==='dog'?'dog':'human'})();
 const isDog=()=>SKIN==='dog';
-const DOG_RULES=[[/最后一个人/g,'最后一只小狗'],[/工程师/g,'工程狗'],[/工人/g,'工作狗'],[/儿童/g,'小狗崽'],[/孩子们/g,'狗崽们'],[/一个孩子/g,'一只小狗崽'],[/孩子/g,'小狗崽'],[/病人/g,'病狗'],[/人们/g,'狗狗们'],[/两个年轻人/g,'两只年轻狗狗'],[/年轻人/g,'年轻狗狗'],[/老人/g,'老狗'],[/男人/g,'狗子'],[/人口与记录/g,'狗狗与记录'],[/人口/g,'狗狗'],[/人手/g,'狗手'],[/每人/g,'每只狗'],[/所有人/g,'所有狗狗'],[/人人有家/g,'每只狗狗都有窝'],[/人人/g,'大家'],[/有人/g,'有狗狗'],[/人心/g,'狗心'],[/人民/g,'狗民'],[/(\d+)\s*个?人(?![类民心口手们])/g,'$1 只小狗'],[/(\d+)\s*名/g,'$1 只'],[/派人/g,'派狗'],[/人数/g,'狗数'],[/(<\/b>\s*)人(?![类民心口手们])/g,'$1只'],[/(\d+<\/b>\s*)人/g,'$1只']];
-function L(s){if(!isDog()||typeof s!=='string')return s;for(const [r,t] of DOG_RULES)s=s.replace(r,t);return s}
+const DOG_RULES=[[/最后一个人/g,'最后一只小狗'],[/猎人们/g,'猎手们'],[/([两一几])个(?=工人|工程师|孩子)/g,'$1只'],[/工程师/g,'工程狗'],[/工人/g,'工作狗'],[/儿童/g,'小狗崽'],[/孩子们/g,'狗崽们'],[/一个孩子/g,'一只小狗崽'],[/孩子/g,'小狗崽'],[/病人/g,'病狗'],[/人们/g,'狗狗们'],[/两个年轻人/g,'两只年轻狗狗'],[/年轻人/g,'年轻狗狗'],[/老人/g,'老狗'],[/男人/g,'狗子'],[/人口与记录/g,'狗狗与记录'],[/人口/g,'狗狗'],[/人手/g,'狗手'],[/每人/g,'每只狗'],[/所有人/g,'所有狗狗'],[/人人有家/g,'每只狗狗都有窝'],[/人人/g,'大家'],[/有人/g,'有狗狗'],[/人心/g,'狗心'],[/人民/g,'狗民'],[/(\d+)\s*个?人(?![类民心口手们])/g,'$1 只小狗'],[/(\d+)\s*名/g,'$1 只'],[/派人/g,'派狗'],[/人数/g,'狗数'],[/(<\/b>\s*)人(?![类民心口手们])/g,'$1只'],[/(\d+<\/b>\s*)人/g,'$1只']];
+function L(s){if(!isDog()||typeof s!=='string')return s;for(const [r,t] of DOG_RULES)s=s.replace(r,t);return s.replace(/个(狗狗|小狗)/g,'只$1')}
 const DOG_POP='<svg viewBox="0 0 24 24"><g fill="#fff" stroke="#151515" stroke-width="1.6" stroke-linejoin="round"><ellipse cx="10" cy="16" rx="7" ry="4.5"/><circle cx="15.5" cy="10.5" r="5"/><path d="M12 7.5c-1.6.2-2.4 1.8-1.8 3.4M19 7.5c1.6.2 2.2 1.8 1.6 3.4" fill="none"/><path d="M3.5 14c-1.5-1-1.5-2.8-.5-3.5" fill="none"/></g><circle cx="14" cy="10.3" r=".9" fill="#151515"/><circle cx="17.3" cy="10.3" r=".9" fill="#151515"/><path d="M14.8 12.5q.8.7 1.6 0" stroke="#151515" stroke-width="1" fill="none"/></svg>';
 const DOG_NAV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><ellipse cx="10" cy="16" rx="7" ry="4.5"/><circle cx="15.5" cy="10" r="5"/><path d="M12 7c-1.6.2-2.4 1.8-1.8 3.4M19 7c1.6.2 2.2 1.8 1.6 3.4M3.5 14c-1.5-1-1.5-2.8-.5-3.5"/><circle cx="14" cy="10" r=".5" fill="currentColor"/><circle cx="17.2" cy="10" r=".5" fill="currentColor"/></svg>';
 function skinToggleHTML(){return `<div class="skinsel"><span>市民外观</span><button data-skin="human" class="${SKIN==='human'?'on':''}">🧑 人类</button><button data-skin="dog" class="${SKIN==='dog'?'on':''}">🐶 线条小狗</button></div>`}
@@ -707,13 +711,13 @@ function computeAlerts(){
  if(S.disc>75)a.push([feat('laws')?'laws':'none','不满即将爆发','']);
  if(S.strike>0)a.push(['none',`工人停工中（${S.strike}小时）`,'warn']);
  if(S.emergencyLeft>0)a.push(['none',`紧急轮班中（${S.emergencyLeft}小时）`,'warn']);
- return a.slice(0,4);
+ return a.slice(0,inCamp()&&window.innerWidth<700?3:4);
 }
-let lastAlertH='';
+let lastAlertH='',prevAl=[];
 function renderAlerts(){
  const list=computeAlerts();
- const h=list.map(([k,t,cls])=>`<button class="al ${cls}" data-al="${k}"><b>!</b><span>${L(t)}</span>${k!=='none'?'<span class="go">点我 ›</span>':''}</button>`).join('');
- if(h!==lastAlertH){$('#alerts').innerHTML=h;lastAlertH=h}
+ const h=list.map(([k,t,cls])=>`<button class="al ${cls}${prevAl.includes(k+t.replace(/\d+/g,''))?'':' nw'}" data-al="${k}"><b>!</b><span>${L(t)}</span>${k!=='none'?'<span class="go">点我 ›</span>':''}</button>`).join('');
+ if(h!==lastAlertH){$('#alerts').innerHTML=h;lastAlertH=h;prevAl=list.map(([k,t])=>k+t.replace(/\d+/g,''))}
 }
 function firstUnder(types){let best=-1,gap=0;S.b.forEach((b,i)=>{if(b&&types.includes(b.type)){const g=B[b.type].max-staffN(b);if(best<0||g>gap){best=i;gap=g}}});return best}
 function alertAction(k){
@@ -822,7 +826,7 @@ function furnaceHTML(){
  <div class="kvs"><div class="kvr"><span class="k">现在</span><span class="val">室外 ${S.cache.out}°C，熔炉 <b style="color:#ffb45e">+${furnaceHeat()}°C</b><small>每小时耗煤 ${use.toFixed(1)}（含加热器）${hrs===Infinity?'':'，现有煤炭可烧 <b>'+hrs+'</b> 小时'}</small></span></div></div>
  <p class="muted" style="margin:10px 0 5px">选择火力档位</p>
  <div class="lvls">${['熄火','一档','二档','三档'].map((n,l)=>`<button data-act="lvl" data-l="${l}" class="${f.lvl===l?'on':''}">${n}<small>${l?'+'+[0,15,30,45][l]+'°C':'不供暖'}<br>${l?[0,4,8,12][l]+' 煤/时':'不耗煤'}</small></button>`).join('')}</div>
- ${feat('over')?`<div class="row c" style="margin-top:12px"><button class="btn ${f.over?'red':'pri'}" data-act="over" style="flex:1">${f.over?'■ 关闭超载':'▲ 开启超载（再 +15°C，耗煤×1.5）'}</button></div>`:'<p class="muted">🔒 熔炉超载将在第5章解锁。</p>'}
+ ${feat('over')?`<div class="row c" style="margin-top:12px"><button class="btn ${f.over?'red':'pri'}" data-act="over" style="flex:1">${f.over?'■ 关闭超载':'▲ 开启超载（再 +15°C，耗煤×1.5）'}</button></div>`:`<p class="muted">🔒 熔炉超载将在第${featCh('over')}章解锁。</p>`}
  <p class="muted">压力 <b style="color:${f.stress>70?'#ff6a55':'#ffc477'}">${Math.round(f.stress)}%</b>：超载时每小时 +${has('valve')?2.5:5}%，关闭后每小时 −4%。<b style="color:#ff8a76">到100%熔炉会爆炸！</b></p>
  <div class="pbar"><i style="width:${f.stress}%;${f.stress>70?'background:linear-gradient(#ff8a6a,#c0281a)':''}"></i></div>
  ${f.out?'<p style="color:#ff8a76;font-weight:700">⚠ 熔炉因缺煤熄灭！尽快让采煤站满员或多建采煤站。</p>':''}`;
@@ -974,7 +978,7 @@ function positionFloats(){
 }
 /* ====================== 按钮事件 ====================== */
 function bindUI(){
- document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{if(!S||S.ended)return;const m=b.dataset.nav;if((m==='laws'||m==='tech')&&!feat(m)){toast(`${m==='laws'?'法典':'研究'}将在第${m==='laws'?5:4}章解锁`,'bad');return}if(m==='laws'&&S.newSeen)S.newSeen.laws=1;if(sheetMode===m){closeSheet();return}if(m==='build'&&place){cancelPlace()}openSheet(m)});
+ document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{if(!S||S.ended)return;const m=b.dataset.nav;if((m==='laws'||m==='tech')&&!feat(m)){toast(`${m==='laws'?'法典':'研究'}将在第${featCh(m)}章解锁`,'bad');return}if(m==='laws'&&S.newSeen)S.newSeen.laws=1;if(sheetMode===m){closeSheet();return}if(m==='build'&&place){cancelPlace()}openSheet(m)});
  $('#heatBtn').onclick=()=>{heatView=!heatView;$('#heatBtn').classList.toggle('on',heatView);toast(heatView?'热力图：颜色越暖越舒适，蓝色代表危险的寒冷':'已关闭热力图')};
  document.querySelectorAll('[data-spd]').forEach(b=>b.onclick=()=>{if(tut){toast('教程中时间暂停，完成或跳过教程后开始','bad');return}setSpeed(+b.dataset.spd)});
  $('#helpBtn').onclick=()=>{if(S&&!S.ended)showHelp()};
@@ -1564,8 +1568,8 @@ function tapAt(x,y){
  if(Math.hypot(wx,wy+0.1)<0.16&&(best<0||bd>0.07)){openSheet('furnace');return}
  if(best>=0)openSlot(best);else closeSheet();
 }
-/* ====================== 战役：六章故事 ====================== */
-const PROG_KEY='bingyuan-yujin-camp-progress',CAMP_KEY='bingyuan-yujin-camp-ch';
+/* ====================== 战役：十章故事 ====================== */
+const PROG_KEY='bingyuan-yujin-camp-progress-v2',CAMP_KEY='bingyuan-yujin-camp2-ch';
 const T=s=>s.replace(/\{([^|}]*)\|([^}]*)\}/g,(m,a,b)=>isDog()?b:a);
 const inCamp=()=>!!(S&&S.mode==='camp');
 const CHD=()=>CH[S.ch];
@@ -1573,18 +1577,20 @@ function maxDays(){return inCamp()?CHD().days+(S.extended?2:0):DAYS}
 function allowedB(k){return !inCamp()||CHD().builds.includes(k)}
 function isNewB(k){return inCamp()&&(CHD().newB||[]).includes(k)}
 function feat(k){return !inCamp()||!!CHD().feat[k]}
-function evAllowed(e){if(!inCamp())return true;return (CHD().events||[]).includes(e.id)}
 function coldList(){return inCamp()?CHD().cold||[]:[[7,9,'寒潮'],[15,17,'强寒潮'],[22,24,'深寒'],[28,30,'大风暴']]}
 function campTemp(day,hour){const c=CHD();let t=c.temp[0]+c.temp[1]*day;for(const [a,b,,d] of c.cold||[])if(day>=a&&day<=b)t+=typeof d==='function'?d(day):d;if(hour<6||hour>=21)t-=5;return Math.round(t)}
 const cnt=t=>S.b.filter(b=>b&&b.type===t).length;
 const staffed=t=>S.b.some(b=>b&&b.type===t&&staffN(b)>=B[t].max);
-function getProg(){try{return JSON.parse(localStorage.getItem(PROG_KEY))||{stars:{}}}catch(e){return {stars:{}}}}
+function getProg(){try{let p=JSON.parse(localStorage.getItem(PROG_KEY));if(!p){p={stars:{}};const o=JSON.parse(localStorage.getItem('bingyuan-yujin-camp-progress')||'null');if(o&&o.stars){const M={0:0,1:1,2:3,3:5,4:8,5:9};for(const k in o.stars)if(M[k]!==undefined)p.stars[M[k]]=o.stars[k];p.migrated=1}localStorage.setItem(PROG_KEY,JSON.stringify(p))}return p}catch(e){return {stars:{}}}}
+function featCh(k){return CH.findIndex(c=>c.feat[k])+1}
+function unlockLabel(i){const c=CH[i],a=c.newB.map(k=>B[k].name);[['tech','研究'],['laws','法典'],['over','熔炉超载']].forEach(([k,n])=>{if(featCh(k)===i+1)a.push(n)});return (a.length?'解锁：'+a.join('、'):'全部内容')+(i===CH.length-1?' · 终章':'')}
 function setProg(p){try{localStorage.setItem(PROG_KEY,JSON.stringify(p))}catch(e){}}
 function storyModal(who,text,choices){showModal(who,T(text),choices||[{t:'继续',fn:()=>{}}])}
 /* ---------- 章节定义 ---------- */
+const TE_ALL=['coal2','hunt2','saw2','med2','steel2','power1','valve','power2','heater','house'];
 const CH=[
-{n:'余烬重燃',place:'无名陨坑 · 第1天',days:5,safe:true,hue:0,
- builds:['tent','coal'],newB:['tent','coal'],feat:{laws:0,tech:0,over:0},events:[],evGap:60,
+{n:'余烬重燃',place:'无名陨坑',days:5,safe:true,art:{sky:0,show:['tent','tent','coal'],lit:0,stars:1,sun:1},
+ builds:['tent','coal'],newB:['tent','coal'],feat:{laws:0,tech:0,over:0},
  temp:[-6,-0.6],cold:[],
  start:{res:{coal:60,wood:120,steel:25,raw:0,food:300},pop:{w:24,e:6,c:6},hope:60,disc:5,lvl:0,b:{}},
  deathsOK:0,hope3:55,
@@ -1599,84 +1605,137 @@ const CH=[
   {d:3,h:15,run:()=>storyModal('炉壁上的铭文',`林婉在熔炉底座上发现了一行刻字：<br><i>“第七远征队建造此炉。若你点燃了它，请守住火种——我们去南方建造第二座。”</i><br><br>林婉的手在发抖：“第七远征队的队长……是我父亲，<b>林振</b>。”`)},
   {d:4,h:10,run:()=>storyModal('周队长的女儿',`<b>小雪</b>把冻红的小手伸向熔炉：“爸爸，火好暖。我们能一直住在这里吗？”<br>周队长摸了摸她的头，望向空荡荡的食物箱，没有回答。`)}],
  outro:`熔炉稳定地燃烧着，帐篷里第一次传出了笑声。<br><br>可食物箱见底了。阿岩从坑外回来，带回一串新鲜的蹄印：“北边有<b>雪原驯鹿</b>。我们得学会打猎。”`},
-{n:'猎火',place:'陨坑 · 第二周',days:6,safe:true,hue:1,
- builds:['tent','coal','hunt','kitchen'],newB:['hunt','kitchen'],feat:{laws:0,tech:0,over:0},events:['train','wedding','preacher'],evGap:46,
- temp:[-10,-0.6],cold:[],
+{n:'猎火',place:'陨坑 · 第二周',days:5,safe:true,art:{sky:1,show:['hunt','kitchen','tent'],lit:1},
+ builds:['tent','coal','hunt','kitchen'],newB:['hunt','kitchen'],feat:{laws:0,tech:0,over:0},
+ temp:[-9,-0.6],cold:[],
  start:{res:{coal:220,wood:110,steel:20,raw:10,food:70},pop:{w:28,e:7,c:9},hope:58,disc:8,lvl:1,b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',16:['coal',10],18:['coal',8]}},
- deathsOK:1,hope3:55,
+ deathsOK:0,hope3:55,
  intro:`熔炉守住了，但存粮只够吃一天多。<br><br>阿岩说北边的冰原上有成群的驯鹿。“建<b>猎人小屋</b>，我带{人|狗狗}去打猎；再建一座<b>厨房</b>，把生肉煮成口粮——吃生肉会生病的。”<br><br>周队长点点头：“这一次，我们要让每个{人|狗狗}都吃饱。”`,
  obj:[{t:'建造 2 座猎人小屋',p:()=>[cnt('hunt'),2],c:()=>cnt('hunt')>=2},
   {t:'建造厨房',c:()=>cnt('kitchen')>=1},
   {t:'储备 100 份口粮',p:()=>[Math.floor(S.res.food),100],c:()=>S.res.food>=100},
-  {t:'坚持到第6天结束',surv:1}],
+  {t:'坚持到第5天结束',surv:1}],
  beats:[
   {d:3,h:11,run:()=>storyModal('冰封的营地',`猎人们在北坡发现了一座被冰封的营地，帐篷上印着“第七远征队”。<br>营地里有几箱物资，还有一本冻硬的日志。林婉认出了父亲的字迹：<i>“……向南三百里，有地热，可建第二座熔炉，我们叫它<b>新希望</b>……”</i>`,[{t:'把物资带回城',d:'木材 +40，钢铁 +10',fn:()=>{S.res.wood+=40;S.res.steel+=10}},{t:'就地安葬遇难的队员',d:'希望 +8',fn:()=>{S.hope+=8}}])},
-  {d:5,h:10,run:()=>storyModal('篝火边',`驯鹿汤的香味飘满了陨坑。小雪捧着碗跑来跑去：“林婉姐姐，你爸爸也会喝到这么好喝的汤吗？”<br>林婉笑了笑，把日志抱得更紧。`)}],
- outro:`每个{人|狗狗}都吃上了热汤。<br><br>可是几个猎人回来后开始发高烧，咳个不停。医生说这是冰原上的<b>白热病</b>——冷和累会让它在帐篷之间蔓延。`},
-{n:'白热病',place:'陨坑 · 第三周',days:6,safe:false,hue:2,
- builds:['tent','coal','hunt','kitchen','saw','med'],newB:['med','saw'],feat:{laws:0,tech:0,over:0},events:['train','wedding','preacher','theft'],evGap:42,
- temp:[-13,-0.7],cold:[],
- start:{res:{coal:240,wood:80,steel:20,raw:20,food:130},pop:{w:40,e:8,c:8},sick:{w:4,e:0,c:2},hope:55,disc:12,lvl:1,b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',16:['coal',10],18:['coal',6],20:['hunt',5],22:['hunt',5],8:['kitchen',5]}},
- deathsOK:2,hope3:50,
- intro:`白热病在帐篷之间蔓延，已经有 6 {个人|只小狗}病倒了，连小雪也开始咳嗽。<br><br>“只有<b>工程师</b>懂医术，”林婉说，“建一座<b>医疗站</b>，让工程师去救{人|狗狗}。”<br><br>可木材也快用完了。城外的枯树林里有的是木头——建一座<b>伐木场</b>吧。`,
- obj:[{t:'建造医疗站，派满 5 名工程师',c:()=>staffed('med')},
-  {t:'建造伐木场',c:()=>cnt('saw')>=1},
-  {t:'把病人数降到 2 以下',p:()=>[totalSick(),2],c:()=>totalSick()<=2&&S.day>=2,inv:1},
+  {d:4,h:18,run:()=>storyModal('篝火边',`驯鹿汤的香味飘满了陨坑。小雪捧着碗跑来跑去：“林婉姐姐，你爸爸也会喝到这么好喝的汤吗？”<br>林婉笑了笑，把日志抱得更紧。`)}],
+ outro:`每个{人|狗狗}都吃上了热汤。<br><br>可是修帐篷、加炉膛、做家具，样样都要木头，木材快见底了。阿岩指着东边：“那边有一片冻死的森林。”`},
+{n:'枯林',place:'陨坑东侧',days:5,safe:true,art:{sky:2,show:['saw','tent','hunt'],lit:1},
+ builds:['tent','coal','hunt','kitchen','saw'],newB:['saw'],feat:{laws:0,tech:0,over:0},
+ temp:[-11,-0.6],cold:[],
+ start:{res:{coal:220,wood:20,steel:20,raw:20,food:130},pop:{w:34,e:8,c:8},hope:56,disc:10,lvl:1,b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',16:['coal',10],18:['coal',6],20:['hunt',5],22:['hunt',5],8:['kitchen',5]}},
+ deathsOK:0,hope3:55,
+ intro:`仓库里只剩最后 20 根木头。<br><br>阿岩在东边找到一片冻死的森林——<b>枯林</b>。奇怪的是，很多树干上都刻着箭头，一路指向南方。“是远征队留下的记号。”林婉说。<br><br>建一座<b>伐木场</b>，把枯树变成木材。木头够了，才能继续搭帐篷、建新房子。`,
+ obj:[{t:'建造伐木场',c:()=>cnt('saw')>=1},
   {t:'储备 120 木材',p:()=>[Math.floor(S.res.wood),120],c:()=>S.res.wood>=120},
+  {t:'第3天后让大家都有地方住',c:()=>S.day>=3&&S.cache.homeless===0},
+  {t:'坚持到第5天结束',surv:1}],
+ beats:[
+  {d:2,h:10,run:()=>{const p={w:5,e:1,c:2};storyModal('林中的哭声',`伐木的{人|狗狗}在枯林深处发现了一户躲在树洞里的铁港{人家|狗狗}，一共 8 {口|只}，冻得说不出话。`,[{t:'带他们回城',d:'人口 +8，需要多搭一顶帐篷；希望 +5',fn:()=>{addPop(p);S.hope+=5;log('8 名幸存者被带回了城。','good')}},{t:'只给他们一些口粮',d:'口粮 -20，希望 -4',fn:()=>{S.res.food=Math.max(0,S.res.food-20);S.hope-=4}}])}},
+  {d:4,h:11,run:()=>storyModal('树上的箭头',`箭头的尽头是一个半埋在雪里的木箱，盖子上烙着“第七远征队”。`,[{t:'撬开看看',d:'木材 +30，钢铁 +10',fn:()=>{S.res.wood+=30;S.res.steel+=10}},{t:'原样封好，留给后来者',d:'希望 +6',fn:()=>{S.hope+=6}}])}],
+ outro:`伐木场的锯声日夜不停，木材堆成了小山。<br><br>可砍树的{人|狗狗}回来后，有几个开始发高烧、咳个不停。医生的脸色很难看：“是<b>白热病</b>——冷和累会让它在帐篷之间蔓延。”`},
+{n:'白热病',place:'陨坑 · 第四周',days:6,safe:false,art:{sky:2,show:['med','saw','tent'],lit:1},
+ builds:['tent','coal','hunt','kitchen','saw','med'],newB:['med'],feat:{laws:0,tech:0,over:0},
+ temp:[-13,-0.7],cold:[],
+ start:{res:{coal:240,wood:60,steel:20,raw:20,food:130},pop:{w:40,e:8,c:8},sick:{w:4,e:0,c:2},hope:55,disc:12,lvl:1,b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',16:['coal',10],18:['coal',6],20:['hunt',5],22:['hunt',5],8:['kitchen',5],24:['saw',5]}},
+ deathsOK:1,hope3:50,
+ intro:`白热病在帐篷之间蔓延，已经有 6 {个人|只小狗}病倒了，连小雪也开始咳嗽。<br><br>“只有<b>工程师</b>懂医术，”林婉说，“建一座<b>医疗站</b>，让工程师去救{人|狗狗}。”<br><br>天越来越冷，住得越冷越容易生病。点中央的熔炉，可以调高火力。`,
+ obj:[{t:'建造医疗站，派满 5 名工程师',c:()=>staffed('med')},
+  {t:'把病人数降到 2 以下',p:()=>[totalSick(),2],c:()=>totalSick()<=2&&S.day>=2,inv:1},
+  {t:'储备 150 份口粮',p:()=>[Math.floor(S.res.food),150],c:()=>S.res.food>=150},
   {t:'坚持到第6天结束',surv:1}],
  beats:[
   {d:1,h:16,run:()=>storyModal('小雪病了',`小雪烧得满脸通红。周队长守在她床边，一夜没有合眼。<br>“队长，医疗站一建好，我第一个给她治。”林婉说。`,[{t:'让小雪优先治疗',d:'希望 +3，不满 +3',fn:()=>{S.hope+=3;S.disc+=3}},{t:'所有病人一视同仁',d:'不满 -4',fn:()=>{S.disc-=4}}])},
-  {d:3,h:12,run:()=>storyModal('提示：调高火力',`医生提醒：<b>越冷越容易生病</b>。<br>点中央的熔炉，可以把火力调到二档——更暖和，但每小时多烧 4 煤炭。煤炭够的话，不妨试试。`)},
-  {d:5,h:10,run:()=>storyModal('日志的最后一页',`小雪退烧了，周队长终于睡了个好觉。<br>林婉在日志最后一页找到一张图纸：一台<b>无线电</b>。“如果能修好它，也许能联系上新希望……可我们需要钢铁和一间像样的工作坊。”`)}],
- outro:`病人一个个康复，医疗站的灯彻夜亮着。<br><br>林婉摊开图纸：“要造无线电，得先有<b>钢铁厂</b>和<b>工作坊</b>。工作坊还能研究新技术，让大家活得更好。”`},
-{n:'铁与火花',place:'陨坑 · 第四周',days:7,safe:false,hue:3,
- builds:['tent','coal','hunt','kitchen','saw','med','steel','lab'],newB:['steel','lab'],feat:{laws:0,tech:1,over:0},techs:['coal2','hunt2','saw2','steel2','med2'],events:['train','wedding','preacher','theft','sickchild','gamble','cache'],evGap:40,
- temp:[-16,-0.8],cold:[],
- start:{res:{coal:320,wood:130,steel:15,raw:30,food:160},pop:{w:40,e:12,c:10},hope:55,disc:12,lvl:1,b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',6:'tent',8:['kitchen',5],10:['med',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',5]}},
- deathsOK:2,hope3:50,
- intro:`陨坑已经像一座小城了。林婉的无线电图纸摊在桌上，缺的是<b>钢铁</b>和<b>工作坊</b>。<br><br>“钢铁厂能从废铁里炼出钢；工作坊里的工程师能做<b>研究</b>——更好的钻头、更快的锯子……”<br><br>周队长看着图纸：“那就造吧。我们要知道，这片冰原上是不是只剩下我们。”`,
+  {d:3,h:12,run:()=>storyModal('医生的提醒',`<b>越冷越容易生病</b>。<br>点中央的熔炉，可以把火力调到二档——更暖和，但每小时多烧 4 煤炭。煤炭够的话，不妨试试。`)},
+  {d:5,h:10,run:()=>storyModal('日志的下一页',`小雪退烧了，周队长终于睡了个好觉。<br>林婉在日志里找到一张图纸：<i>“蒸汽加热器——给远离熔炉的房子送去温暖。”</i>`)}],
+ outro:`病人一个个康复，医疗站的灯彻夜亮着。<br><br>可外圈的帐篷结了厚厚的冰，住在那儿的{人|狗狗}最容易生病。林婉摊开图纸：“熔炉的热传不了那么远——我们需要<b>蒸汽加热器</b>。”`},
+{n:'暖区',place:'陨坑外圈',days:6,safe:false,art:{sky:4,show:['heater','tent','med'],lit:1,snow:1},
+ builds:['tent','coal','hunt','kitchen','saw','med','heater'],newB:['heater'],feat:{laws:0,tech:0,over:0},
+ temp:[-14,-0.7],cold:[[3,4,'小寒潮',-14]],
+ start:{res:{coal:320,wood:120,steel:50,raw:30,food:170},pop:{w:44,e:10,c:10},hope:55,disc:12,lvl:1,tech:['heater'],b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',6:'tent',8:['kitchen',5],10:['med',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',5]}},
+ deathsOK:1,hope3:50,
+ intro:`离熔炉越远，就越冷。林婉照着日志造出了<b>蒸汽加热器</b>：放在建筑旁边，让周围 +20°C，但每小时要烧 2 煤炭。<br><br>点右下角的<b>热力图</b>，就能看到哪里暖、哪里冷。<br><br>气象员敲响了铜钟：第3天起，会有一场两天的<b>小寒潮</b>。`,
+ obj:[{t:'打开热力图看看温度',c:()=>!!S.seen.heatmap},
+  {t:'建造 2 座蒸汽加热器',p:()=>[cnt('heater'),2],c:()=>cnt('heater')>=2},
+  {t:'把熔炉调到二档',c:()=>S.furnace.lvl>=2},
+  {t:'熬过小寒潮，坚持到第6天结束',surv:1}],
+ beats:[
+  {d:2,h:9,run:()=>storyModal('寒潮预警',`明天起气温会骤降 14°C，持续两天。<br>建议：在外圈的帐篷旁边建<b>加热器</b>，把熔炉调到<b>二档</b>，多存点煤。`)},
+  {d:3,h:0,run:()=>log('小寒潮来了！','bad')},
+  {d:5,h:14,run:()=>storyModal('小雪的发现',`小雪在熔炉的地下室里捡到一个铁盒子，上面写着：<i>“第七远征队 · 无线电零件”</i>。<br>林婉的眼睛亮了：“如果能把它装起来……也许能听到新希望的声音！”`)}],
+ outro:`寒潮过去了，外圈的帐篷也暖和起来。<br><br>林婉把无线电零件摆满了桌子：“我需要一间<b>工作坊</b>。有了它，我们还能<b>研究</b>新技术，让大家活得更好。”`},
+{n:'火花',place:'陨坑 · 工作坊',days:6,safe:false,art:{sky:3,show:['lab','heater','saw'],lit:1,stars:1,aurora:1},
+ builds:['tent','coal','hunt','kitchen','saw','med','heater','lab'],newB:['lab'],feat:{laws:0,tech:1,over:0},techs:['coal2','hunt2','saw2','med2'],
+ temp:[-16,-0.7],cold:[],
+ start:{res:{coal:330,wood:140,steel:30,raw:30,food:180},pop:{w:44,e:12,c:10},hope:55,disc:14,lvl:1,tech:['heater'],b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',6:'tent',7:'heater',8:['kitchen',5],10:['med',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',4]}},
+ deathsOK:1,hope3:50,
+ intro:`林婉要装起那台无线电，可光有零件不够。<br><br>“建一座<b>工作坊</b>，让工程师在里面做<b>研究</b>。”她说，“更快的锯子、更深的钻头、更好的药……一项一项来。”<br><br>研究点数够了，项目就会自动完成。`,
+ obj:[{t:'建造工作坊',c:()=>cnt('lab')>=1},
+  {t:'完成 2 项研究',p:()=>[S.tech.filter(t=>t!=='heater').length,2],c:()=>S.tech.filter(t=>t!=='heater').length>=2},
+  {t:'建造第 3 座采煤站',p:()=>[cnt('coal'),3],c:()=>cnt('coal')>=3},
+  {t:'坚持到第6天结束',surv:1}],
+ beats:[
+  {d:2,h:11,run:()=>storyModal('第一个研究',`工作坊里的炉子烧起来了。<br>打开下方的<b>【研究】</b>，选一个项目，比如“深层钻头”（采煤 +30%）。工程师会一点点攒研究点。`)},
+  {d:5,h:20,run:()=>storyModal('沙沙声',`深夜，无线电第一次响了。在刺耳的杂音里，一个嘶哑的声音断断续续：<br><i>“……这里是……新希望……熔炉……撑不住了……需要……钢……”</i><br><br>声音消失了。整个工作坊鸦雀无声。`)}],
+ outro:`南方还有{人|狗狗}活着！<br><br>“要让无线电发出回音，需要大量<b>钢铁</b>。”林婉说。阿岩背起行囊：“远征队的日志里提过一座废弃的钢铁仓库，我去找。”`},
+{n:'钢铁与营救',place:'陨坑 · 第七周',days:7,safe:false,art:{sky:4,show:['steel','lab','coal'],lit:1,snow:1},
+ builds:['tent','coal','hunt','kitchen','saw','med','heater','lab','steel'],newB:['steel'],feat:{laws:0,tech:1,over:0},techs:['coal2','hunt2','saw2','med2','steel2'],
+ temp:[-21,-0.9],cold:[],
+ start:{res:{coal:300,wood:120,steel:10,raw:20,food:120},pop:{w:46,e:12,c:10},hope:50,disc:18,lvl:1,tech:['heater'],b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',6:'tent',7:'heater',8:['kitchen',5],10:['med',5,'e'],12:['lab',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',5]}},
+ deathsOK:1,hope3:60,
+ intro:`阿岩去找废弃的钢铁仓库，已经两天没有消息了。<br><br>城里也不能干等：建一座<b>钢铁厂</b>，从废铁里炼出钢来。人手很紧——可能要从别的岗位调{人|狗狗}过去。<br><br>周队长望着南方：“阿岩，你可别出事。”`,
  obj:[{t:'建造钢铁厂',c:()=>cnt('steel')>=1},
-  {t:'建造工作坊',c:()=>cnt('lab')>=1},
-  {t:'完成 1 项研究',p:()=>[S.tech.length,1],c:()=>S.tech.length>=1},
-  {t:'储备 50 钢铁',p:()=>[Math.floor(S.res.steel),50],c:()=>S.res.steel>=50},
+  {t:'救回阿岩',c:()=>!!S.seen.rescued},
+  {t:'储备 60 钢铁',p:()=>[Math.floor(S.res.steel),60],c:()=>S.res.steel>=60},
   {t:'坚持到第7天结束',surv:1}],
  beats:[
-  {d:2,h:10,run:()=>{const p={w:10,e:2,c:2};storyModal('最后的车队',`一支铁港的雪橇车队循着熔炉的烟柱找来了，14 {个人|只小狗}，大多是壮劳力。<br>“我们听说北边有火……原来是真的！”`,[{t:'欢迎回家',d:'人口 +14（可以去钢铁厂干活），记得搭帐篷；希望 +5',fn:()=>{addPop(p);S.hope+=5;log('铁港车队加入了城市。','good')}},{t:'城里住不下了',d:'希望 -12',fn:()=>{S.hope-=12}}])}},
-  {d:5,h:13,run:()=>storyModal('沙沙声',`深夜，林婉的无线电第一次响了。在刺耳的杂音里，一个嘶哑的声音断断续续：<br><i>“……这里是……新希望……熔炉……撑不住了……寒潮……三天……”</i><br><br>声音消失了。整个指挥所鸦雀无声。`)}],
- outro:`林婉反复播放那段录音。“寒潮……他们说寒潮要来了。”<br><br>周队长召集了所有{人|狗狗}：“我们需要<b>更暖的房子</b>、<b>加热器</b>，还需要一部<b>法典</b>——在最冷的日子里，规矩能救命。”`},
-{n:'寒潮来袭',place:'陨坑 · 第五周',days:8,safe:false,hue:4,
- builds:['tent','house','coal','saw','hunt','kitchen','med','lab','steel','heater'],newB:['house','heater'],feat:{laws:1,tech:1,over:1},events:['train','wedding','preacher','theft','sickchild','gamble','cache','strike','frost','noise'],evGap:40,
- temp:[-17,-0.8],cold:[[4,6,'寒潮',-30]],
- start:{res:{coal:400,wood:160,steel:70,raw:30,food:150},pop:{w:42,e:14,c:12},hope:55,disc:15,lvl:1,tech:['heater','house'],b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',6:'tent',8:['kitchen',5],10:['med',5,'e'],12:['lab',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',5],26:['steel',2]}},
- deathsOK:3,hope3:60,
- intro:`无线电说得没错——第4天起，<b>寒潮</b>将席卷陨坑，持续三天，气温会骤降 30°C。<br><br>林婉画好了<b>保温木屋</b>和<b>蒸汽加热器</b>的图纸。周队长翻开一本空白的册子：“从今天起，我们有了<b>法典</b>。”<br><br>熔炉也可以<b>超载</b>了——更暖，但压力会上升，千万别让它爆炸。`,
- obj:[{t:'签署第一条法令',c:()=>S.laws.length>=1},
-  {t:'建造 2 座保温木屋',p:()=>[cnt('house'),2],c:()=>cnt('house')>=2},
-  {t:'建造蒸汽加热器',c:()=>cnt('heater')>=1},
+  {d:1,h:14,run:()=>storyModal('南方的信号弹',`南边的天空亮起一颗红色信号弹——是阿岩！他一定遇到了麻烦。`,[{t:'派 6 名工人全速救援',d:'6 名工人离开 2 天，回来更快',fn:()=>sendRescue(6,48)},{t:'派 2 名工人慢慢搜',d:'2 名工人离开 4 天',fn:()=>sendRescue(2,96)}])}],
+ outro:`阿岩带回的地图上，标着新希望的位置。无线电终于发出了回音：<i>“……收到！我们的熔炉坏了……我们会尽快北上……”</i><br><br>可城里的气氛却越来越紧张：活太多，{人|狗狗}太累，有{人|狗狗}开始抱怨了。`},
+{n:'罢工风波',place:'陨坑 · 指挥所',days:7,safe:false,art:{sky:0,show:['steel','tent','coal'],lit:1,stars:1},
+ builds:['tent','coal','hunt','kitchen','saw','med','heater','lab','steel'],newB:[],feat:{laws:1,tech:1,over:0},techs:['coal2','hunt2','saw2','med2','steel2','power1'],
+ temp:[-22,-0.9],cold:[],
+ start:{res:{coal:340,wood:150,steel:40,raw:30,food:160},pop:{w:50,e:12,c:12},hope:40,disc:58,lvl:1,tech:['heater'],b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',6:'tent',14:'tent',7:'heater',8:['kitchen',5],10:['med',5,'e'],12:['lab',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',5],26:['steel',5]}},
+ deathsOK:1,hope3:65,
+ intro:`连续几周的苦干，让大家筋疲力尽。<b>不满</b>已经过半，工人代表放话：再不改善，就罢工。<br><br>周队长翻开一本空白的册子：“是时候立下规矩了。”<br><br><b>法典</b>：签署法令，每条有好有坏，签了不能撤销。“篝火集会”“额外口粮”能安抚人心；“延长工时”产量高但会更不满。`,
+ obj:[{t:'签署 2 条法令',p:()=>[S.laws.length,2],c:()=>S.laws.length>=2},
+  {t:'把不满降到 30 以下',p:()=>[Math.round(S.disc),30],c:()=>S.disc<30,inv:1},
+  {t:'坚持到第7天结束',surv:1}],
+ beats:[
+  {d:2,h:10,run:()=>storyModal('工人的最后通牒',`工人代表堵在指挥所门口：“我们要休息！今天不放假，明天就没{人|狗狗}上工！”`,[{t:'放半天假',d:'停工 12 小时，不满 -12',fn:()=>{S.strike=Math.max(S.strike,12);S.disc-=12}},{t:'承诺尽快签署新法令',d:'不满 +5（记得去法典签一条安抚的法令）',fn:()=>{S.disc+=5}}])},
+  {d:5,h:19,run:()=>storyModal('孩子们的歌',`小雪带着孩子们在熔炉边唱起铁港的老歌。几个板着脸的工人也跟着哼了起来。`,[{t:'让大家都来听',d:'希望 +5，不满 -5，口粮 -10',fn:()=>{S.hope+=5;S.disc-=5;S.res.food=Math.max(0,S.res.food-10)}},{t:'早点休息，明天还要干活',d:'无事发生',fn:()=>{}}])}],
+ outro:`城市重新团结起来。<br><br>这时无线电里传来急促的呼叫：<i>“寒潮！寒潮要来了！新希望的第一批{人|狗狗}已经出发，很快就到！”</i>`},
+{n:'寒潮与难民',place:'陨坑 · 城门',days:8,safe:false,art:{sky:4,show:['house','heater','house'],lit:1,snow:1},
+ builds:['tent','house','coal','saw','hunt','kitchen','med','lab','steel','heater'],newB:['house'],feat:{laws:1,tech:1,over:1},techs:['coal2','hunt2','saw2','med2','steel2','power1','valve'],
+ temp:[-19,-0.8],cold:[[4,6,'寒潮',-30]],
+ start:{res:{coal:420,wood:200,steel:80,raw:30,food:180},pop:{w:50,e:14,c:12},hope:52,disc:22,lvl:1,tech:['heater','house'],b:{0:'tent',1:'tent',2:'tent',3:'tent',4:'tent',5:'tent',6:'tent',14:'tent',7:'heater',8:['kitchen',5],10:['med',5,'e'],12:['lab',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',5],26:['steel',5]}},
+ deathsOK:2,hope3:55,
+ intro:`新希望的第一批幸存者正在赶来，寒潮紧随其后：第4–6天，气温将骤降 30°C。<br><br>林婉画好了<b>保温木屋</b>的图纸（保温 +15°C）。熔炉也可以<b>超载</b>了——再 +15°C，但压力会上升，千万别让它到100%。<br><br>“房子要够、要暖。”周队长说，“一个都不能冻着。”`,
+ obj:[{t:'建造 3 座保温木屋',p:()=>[cnt('house'),3],c:()=>cnt('house')>=3},
+  {t:'第3天后让大家都有地方住',c:()=>S.day>=3&&S.cache.homeless===0},
   {t:'熬过寒潮，坚持到第8天结束',surv:1}],
  beats:[
-  {d:2,h:9,run:()=>storyModal('寒潮预警',`林婉盯着气压计：“第4天开始，持续三天。”<br>建议：多囤<b>煤炭</b>，把帐篷换成<b>保温木屋</b>，在住所旁建<b>加热器</b>；寒潮时把熔炉调到<b>三档</b>。`)},
+  {d:2,h:10,run:()=>{const p={w:12,e:4,c:4};storyModal('新希望的第一批人',`城门外来了 20 {个人|只小狗}，衣服上缝着“新希望”的布条。领头的说：“我们的熔炉裂了……林振让我们先走。”`,[{t:'打开城门',d:'人口 +20（需要更多房子和食物）；希望 +8',fn:()=>{addPop(p);S.hope+=8;log('20 名新希望的幸存者进城了。','good')}},{t:'我们住不下了',d:'希望 -18，不满 +8',fn:()=>{S.hope-=18;S.disc+=8}}])}},
+  {d:3,h:9,run:()=>storyModal('寒潮预警',`明天起寒潮来袭，持续三天。<br>建议：多建<b>保温木屋</b>，在住所旁建<b>加热器</b>；寒潮时把熔炉调到<b>三档</b>，必要时短时间<b>超载</b>。`)},
   {d:4,h:0,run:()=>log('寒潮降临了！熔炉调高火力！','bad')},
-  {d:5,h:12,run:()=>storyModal('阿岩的请求',`阿岩背好了行囊：“让我去南边找新希望。他们的熔炉要撑不住了，我们不能装作没听见。”`,[{t:'带上口粮去吧',d:'口粮 -20，希望 +6',ok:()=>S.res.food>=20,fn:()=>{S.res.food-=20;S.hope+=6;S.seen.ayan=1}},{t:'等寒潮过去再说',d:'不满 +4',fn:()=>{S.disc+=4}}])},
   {d:7,h:9,run:()=>log('寒潮退去了，气温回升。','good')}],
- outro:`寒潮过去了，木屋的窗户里透出温暖的光。<br><br>几天后，阿岩跌跌撞撞地回到城门口，胡子上结满了冰：“新希望的熔炉……熄了。幸存者正往这边走——林振也在里面！”<br>他喘了口气，“还有……南边升起了一堵白墙。<b>大风暴</b>要来了。”`},
-{n:'最后的风暴',place:'余烬城 · 风暴前夜',days:9,safe:false,hue:5,
- builds:['tent','house','coal','saw','hunt','kitchen','med','lab','steel','heater'],newB:[],feat:{laws:1,tech:1,over:1},events:['train','wedding','preacher','theft','sickchild','gamble','strike','frost','noise'],evGap:40,
- temp:[-22,-1],cold:[[7,9,'大风暴',d=>-42-(d-7)*10]],
- start:{res:{coal:560,wood:190,steel:85,raw:40,food:200},pop:{w:46,e:14,c:12},hope:58,disc:15,lvl:2,tech:['heater','house'],b:{0:'house',1:'house',2:'house',3:'tent',4:'tent',5:'tent',6:'tent',7:'heater',8:['kitchen',5],10:['med',5,'e'],12:['lab',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',4],26:['steel',2]}},
- deathsOK:3,hope3:60,
- intro:`南方的地平线上，白色的风暴之墙正一点点逼近。第7天，它就会吞没陨坑，持续三天三夜，气温会跌破零下八十度。<br><br>在风暴前面，新希望的幸存者正跋涉而来。<br><br>所有的建筑、法令和研究都已解锁。周队长说：“这是最后一战。守住火，守住每一个{人|狗狗}。”`,
+ outro:`寒潮过去了，木屋的窗户里透出温暖的光。<br><br>几天后，阿岩跌跌撞撞地跑回城门口：“林振带着最后一批{人|狗狗}正往这边走！可是……南边升起了一堵白墙。<b>大风暴</b>要来了。”`},
+{n:'最后的风暴',place:'余烬城 · 风暴前夜',days:8,safe:false,art:{sky:5,show:['house','heater','coal'],lit:1,storm:1},
+ builds:['tent','house','coal','saw','hunt','kitchen','med','lab','steel','heater'],newB:[],feat:{laws:1,tech:1,over:1},
+ temp:[-22,-1],cold:[[6,8,'大风暴',d=>-48-(d-6)*12]],
+ start:{res:{coal:500,wood:180,steel:80,raw:40,food:180},pop:{w:48,e:14,c:12},hope:55,disc:20,lvl:2,tech:['heater','house'],b:{0:'house',1:'house',2:'house',3:'tent',4:'tent',5:'tent',6:'tent',14:'tent',7:'heater',8:['kitchen',5],10:['med',5,'e'],12:['lab',5,'e'],16:['coal',10],18:['coal',10],20:['hunt',5],22:['hunt',5],24:['saw',4],26:['steel',2]}},
+ deathsOK:1,hope3:70,
+ intro:`南方的地平线上，白色的风暴之墙正一点点逼近。第6天，它就会吞没陨坑，持续三天三夜，气温会跌破零下九十度。<br><br>在风暴前面，林振带着新希望最后的幸存者正跋涉而来。<br><br>所有建筑、法令和研究都已开放。周队长说：“这是最后一战。守住火，守住每一个{人|狗狗}。”`,
  obj:[{t:'研究「熔炉增压 I」',c:()=>S.tech.includes('power1')},
   {t:'建造 4 座保温木屋',p:()=>[cnt('house'),4],c:()=>cnt('house')>=4},
   {t:'储备 900 煤炭',p:()=>[Math.floor(S.res.coal),900],c:()=>S.res.coal>=900},
-  {t:'挺过大风暴，坚持到第9天结束',surv:1}],
+  {t:'挺过大风暴，坚持到第8天结束',surv:1}],
  beats:[
-  {d:3,h:11,run:()=>{const p={w:10,e:4,c:4};storyModal('新希望的幸存者',`城门外出现了一列摇摇晃晃的身影——18 {个人|只小狗}，最前面是一位白发的老{人|狗}。<br>林婉扔下工具冲了出去：“<b>爸爸！</b>”<br>林振紧紧抱住女儿：“我就知道……有{人|狗狗}会守住这里的火。”`,[{t:'打开城门，迎接他们',d:'人口 +18（含4名工程师）；希望 +10',fn:()=>{addPop(p);S.hope+=10;log('新希望的幸存者加入了城市。','good')}},{t:'风暴要来了，我们没有余力',d:'希望 -20，不满 +10',fn:()=>{S.hope-=20;S.disc+=10}}])}},
-  {d:5,h:10,run:()=>storyModal('林振的建议',`林振围着熔炉转了三圈：“这座炉子是我设计的。研究<b>熔炉增压</b>，它能多出 10°C 热量；<b>压力阀门</b>能让超载更安全。还有——煤，越多越好。”`)},
-  {d:6,h:9,run:()=>storyModal('风暴前夜',`明天，大风暴就会抵达。<br>检查清单：熔炉调到<b>三档</b>，必要时<b>超载</b>（盯紧压力！）；所有{人|狗狗}住进温暖的房子；煤炭和口粮至少够三天。`)},
-  {d:7,h:0,run:()=>log('大风暴降临了！','bad')}],
- outro:`第十天清晨，风停了。<br><br>阳光第一次穿透云层，照在熔炉的铜顶上。铁港和新希望的幸存者站在一起，小雪在雪地上写下这座城市的名字——<b>余烬城</b>。<br><br>林振把手放在炉壁的铭文上：“谢谢你们，守住了火。”<br><br><b>—— 全剧终 ——</b>`},
+  {d:2,h:11,run:()=>{const p={w:10,e:4,c:4};storyModal('父女重逢',`城门外出现了一列摇摇晃晃的身影——18 {个人|只小狗}，最前面是一位白发的老{人|狗}。<br>林婉扔下工具冲了出去：“<b>爸爸！</b>”<br>林振紧紧抱住女儿：“我就知道……有{人|狗狗}会守住这里的火。”`,[{t:'打开城门，迎接他们',d:'人口 +18（含4名工程师）；希望 +10',fn:()=>{addPop(p);S.hope+=10;log('新希望的幸存者加入了城市。','good')}},{t:'风暴要来了，我们没有余力',d:'希望 -20，不满 +10',fn:()=>{S.hope-=20;S.disc+=10}}])}},
+  {d:3,h:10,run:()=>storyModal('林振的建议',`林振围着熔炉转了三圈：“这座炉子是我设计的。研究<b>熔炉增压</b>，它能多出 10°C 热量；<b>压力阀门</b>能让超载更安全。还有——煤，越多越好。”`)},
+  {d:5,h:9,run:()=>storyModal('风暴前夜',`明天，大风暴就会抵达。<br>检查清单：熔炉调到<b>三档</b>，必要时<b>超载</b>（盯紧压力！）；所有{人|狗狗}住进温暖的房子；煤炭和口粮至少够三天。`)},
+  {d:6,h:0,run:()=>log('大风暴降临了！','bad')}],
+ outro:`风停了。<br><br>阳光第一次穿透云层，照在熔炉的铜顶上。铁港和新希望的幸存者站在一起，小雪在雪地上写下这座城市的名字——<b>余烬城</b>。<br><br>林振把手放在炉壁的铭文上：“谢谢你们，守住了火。”<br><br><b>—— 全剧终 ——</b>`},
 ];
+function sendRescue(n,h){const k=Math.min(n,Math.max(0,S.pop.w-S.sick.w));S.pop.w-=k;reconcile();addChain(h,'rescue',{n:k,fast:h<60});log(`${k} 名工人出发去营救阿岩。`,'')}
 /* ---------- 建立章节状态 ---------- */
 function chState(i){
  const c=CH[i],st=c.start,s=newState();
@@ -1689,7 +1748,7 @@ function chState(i){
 }
 function startChapter(i,cont){
  const saved=cont&&loadCamp(i);
- S=saved||chState(i);S.ended=false;resetTransient();begin();
+ S=saved||chState(i);S.ended=false;resetTransient();begin();objOpen=true;lastObjH='';if(narrow())setTimeout(()=>{if(inCamp()&&!tut&&objOpen){objOpen=false;lastObjH='';renderObj();positionFloats()}},14000);
  if(saved){toast(`继续第${i+1}章 · 第${S.day}天`,'good');return}
  save();setSpeed(0);
  const go=()=>{if(i===0&&!S.tutDone){S.tutDone=1;startTutorial(true)}else setSpeed(1)};
@@ -1709,7 +1768,7 @@ function showNewStuff(i,done){
 /* ---------- 每小时检查 ---------- */
 function campHour(){
  const c=CHD();for(const b of c.beats)if(S.day===b.d&&S.hour===b.h&&!S.seen['beat'+b.d+'-'+b.h]){S.seen['beat'+b.d+'-'+b.h]=1;if(!modalOpen)b.run();else setTimeout(b.run,50)}
- campCheck();
+ campCheck();chainTick();
 }
 function campCheck(){
  if(!inCamp()||S.ended)return;const c=CHD();
@@ -1728,14 +1787,14 @@ function campWin(){
  const p=getProg();p.stars[i]=Math.max(p.stars[i]||0,st);setProg(p);
  closeSheet();place=null;renderPlace();$('#modal').classList.add('hidden');modalOpen=false;if(tut){tut=null;$('#tut').classList.add('hidden')}
  const c=CHD(),sc=$('#screen');sc.classList.remove('hidden');
- sc.innerHTML=`<div class="scr res"><div class="chno">第 ${i+1} 章 · ${c.n}</div><h1>${i===5?'黎明':'本章完成'}</h1>
+ sc.innerHTML=`<div class="scr res"><div class="chno">第 ${i+1} 章 · ${c.n}</div><h1>${i===CH.length-1?'黎明':'本章完成'}</h1>
  <div class="bigstars">${[0,1,2].map(k=>`<span class="${k<st?'on':''}" style="animation-delay:${0.2+k*0.25}s">★</span>`).join('')}</div>
  <div class="crit"><div class="ok">✔ 完成全部目标</div><div class="${S.stats.deaths<=c.deathsOK?'ok':''}">${S.stats.deaths<=c.deathsOK?'✔':'✘'} 死亡不超过 ${c.deathsOK}（本次 ${S.stats.deaths}）</div><div class="${S.hope>=c.hope3?'ok':''}">${S.hope>=c.hope3?'✔':'✘'} 结束时希望 ≥ ${c.hope3}（本次 ${Math.round(S.hope)}）</div></div>
  <div class="paper story"><p>${L(T(c.outro))}</p></div>
  <div class="stats"><div>${isDog()?'狗狗':'人口'}<b>${totalPop()}</b></div><div>死亡<b>${S.stats.deaths}</b></div><div>希望<b>${Math.round(S.hope)}</b></div></div>
- <div class="btns">${i<5?`<button class="btn pri" id="nextCh">下一章：${CH[i+1].n} ›</button>`:`<button class="btn pri" id="survBtn">挑战生存模式</button>`}<button class="btn" id="retryCh">重玩本章</button><button class="btn" id="menuBtn">关卡选择</button></div></div>`;
+ <div class="btns">${i<CH.length-1?`<button class="btn pri" id="nextCh">下一章：${CH[i+1].n} ›</button>`:`<button class="btn pri" id="survBtn">挑战生存模式</button>`}<button class="btn" id="retryCh">重玩本章</button><button class="btn" id="menuBtn">关卡选择</button></div></div>`;
  sc.scrollTop=0;
- if(i<5)$('#nextCh').onclick=()=>showChapterIntro(i+1);else $('#survBtn').onclick=()=>startGame(true);
+ if(i<CH.length-1)$('#nextCh').onclick=()=>showChapterIntro(i+1);else $('#survBtn').onclick=()=>startGame(true);
  $('#retryCh').onclick=()=>showChapterIntro(i);$('#menuBtn').onclick=()=>showIntro();
 }
 function campOver(why){
@@ -1749,55 +1808,56 @@ function campOver(why){
 }
 /* ---------- 目标面板 ---------- */
 let objOpen=true,lastObjH='';
+const narrow=()=>window.innerWidth<700;
 function renderObj(){
  const el=$('#obj');if(!inCamp()||S.ended){if(!el.classList.contains('hidden'))el.classList.add('hidden');lastObjH='';return}
  el.classList.remove('hidden');const c=CHD();const done=c.obj.filter((o,k)=>S.objDone[k]).length,total=c.obj.length;
  const next=c.obj.findIndex((o,k)=>!o.surv&&!S.objDone[k]);
- const line=(o,k)=>{const ok=!!S.objDone[k];let pr='';if(o.p&&!ok){const [a,b]=o.p();pr=` <em>${o.inv?a+'/≤'+b:Math.min(a,b)+'/'+b}</em>`}if(o.surv)pr=` <em>${Math.min(S.day,c.days)}/${c.days}天</em>`;return `<li class="${ok?'ok':''}${k===next?' cur':''}"><i>${ok?'✔':o.surv?'⏳':'○'}</i>${T(o.t)}${pr}</li>`};
- let h=`<button class="oh" id="objToggle"><b>📜 第${S.ch+1}章目标</b><span>${done}/${total}</span><span class="car">${objOpen?'▴':'▾'}</span></button>`;
- if(objOpen)h+=`<ul>${c.obj.map(line).join('')}</ul>${next<0?'<div class="alldone">目标都完成了！坚持到最后一天即可过关</div>':''}`;
- else h+=next>=0?`<div class="one">${line(c.obj[next],next).replace(/^<li[^>]*>|<\/li>$/g,'')}</div>`:'<div class="one">✔ 坚持到最后一天</div>';
+ const prog=o=>{if(o.surv)return ` <em>${Math.min(S.day,maxDays())}/${maxDays()}天</em>`;if(!o.p)return '';const [a,b]=o.p();return ` <em>${o.inv?a+' → ≤'+b:Math.min(a,b)+'/'+b}</em>`};
+ const line=(o,k)=>{const ok=!!S.objDone[k];return `<li class="${ok?'ok':''}${k===next?' cur':''}"><i>${ok?'✔':o.surv?'⏳':'○'}</i><span>${T(o.t)}${ok?'':prog(o)}</span></li>`};
+ let h;
+ if(objOpen){h=`<button class="oh" id="objToggle"><b>📜 第${S.ch+1}章目标</b><span>${done}/${total}</span><span class="car">▴</span></button><ul>${c.obj.map(line).join('')}</ul>${next<0?`<div class="alldone">目标都完成了！坚持到第${maxDays()}天结束即可过关${speed<3?'<button class="btn sm" id="objFF">⏩ 3倍速</button>':''}</div>`:''}`}
+ else{const o=next>=0?c.obj[next]:c.obj[c.obj.length-1];h=`<button class="oh one" id="objToggle"><b>📜 ${done}/${total}</b><span class="ot">${next>=0?T(o.t)+prog(o):'坚持到最后'+prog(o)}</span><span class="car">▾</span></button>`}
  h=L(h);if(h!==lastObjH){el.innerHTML=h;lastObjH=h}
  el.classList.toggle('flash',performance.now()-objFlash<1500);
 }
-$('#obj').addEventListener('click',e=>{if(e.target.closest('#objToggle')){objOpen=!objOpen;lastObjH='';renderObj();positionFloats()}});
+$('#obj').addEventListener('click',e=>{if(e.target.closest('#objFF')){setSpeed(3);lastObjH='';return}if(e.target.closest('#objToggle')){objOpen=!objOpen;lastObjH='';renderObj();positionFloats()}});
+$('#cv').addEventListener('pointerdown',()=>{if(inCamp()&&narrow()&&objOpen&&!tut){objOpen=false;lastObjH='';renderObj();positionFloats()}});
+$('#heatBtn').addEventListener('click',()=>{if(S&&S.seen&&!S.demo)S.seen.heatmap=1});
 /* ---------- 章节插画（程序绘制） ---------- */
 const artCache={};
 function chapterArt(i){
  const key=i+SKIN;if(artCache[key])return artCache[key];
- const W2=640,H2=240,c=document.createElement('canvas');c.width=W2;c.height=H2;const g=c.getContext('2d');
- const sky=[['#2a3350','#c97a4a','#f2b27a'],['#4a6a8a','#a9c3d8','#e3ecf2'],['#3c4a4a','#7e9290','#c4d0cc'],['#070b1c','#16244a','#2c4a6a'],['#0e1a2e','#3a5a80','#9ab8d6'],['#d8dee6','#b8c4d0','#eef2f6']][i];
- g.fillStyle=LG(g,0,0,0,H2,sky);g.fillRect(0,0,W2,H2);
- if(i===3||i===0){for(let k=0;k<70;k++){g.fillStyle=`rgba(255,255,255,${0.3+hash(k)*0.6})`;g.fillRect(hash(k*3.1)*W2,hash(k*7.7)*H2*0.55,1.5,1.5)}}
- if(i===3){for(let b=0;b<3;b++){g.strokeStyle=`rgba(${b?'120,255,190':'90,220,255'},0.22)`;g.lineWidth=18-b*5;g.beginPath();for(let x=0;x<=W2;x+=10)g.lineTo(x,50+b*16+Math.sin(x/70+b)*18);g.stroke()}}
- if(i===0){const gr=g.createRadialGradient(W2*0.8,H2*0.62,0,W2*0.8,H2*0.62,160);gr.addColorStop(0,'rgba(255,200,120,0.8)');gr.addColorStop(1,'rgba(255,200,120,0)');g.fillStyle=gr;g.fillRect(0,0,W2,H2)}
- for(let L2=0;L2<2;L2++){g.fillStyle=L2?'#dfe7ef':'#9fb0c2';if(i===3)g.fillStyle=L2?'#5a6e88':'#2c3a52';g.beginPath();g.moveTo(0,H2);for(let x=0;x<=W2;x+=20)g.lineTo(x,H2*(0.55+L2*0.13)-hash(x*0.37+L2*9)*40*(1.2-L2));g.lineTo(W2,H2);g.fill()}
- g.fillStyle=i===3?'#7f93ad':'#f4f8fc';g.beginPath();g.ellipse(W2/2,H2+20,W2*0.7,70,0,0,TAU);g.fill();
- // 熔炉剪影
- const fx=W2*0.5,fy=H2*0.8,u=26,lit=i>0;
+ const A=CH[i].art,W2=640,H2=240,c=document.createElement('canvas');c.width=W2;c.height=H2;const g=c.getContext('2d');
+ const sky=[['#2a3350','#c97a4a','#f2b27a'],['#4a6a8a','#a9c3d8','#e3ecf2'],['#3c4a4a','#7e9290','#c4d0cc'],['#070b1c','#16244a','#2c4a6a'],['#0e1a2e','#3a5a80','#9ab8d6'],['#d8dee6','#b8c4d0','#eef2f6']][A.sky];
+ g.fillStyle=LG(g,0,0,0,H2,sky);g.fillRect(0,0,W2,H2);const night=A.sky===3;
+ if(A.stars){for(let k=0;k<70;k++){g.fillStyle=`rgba(255,255,255,${0.3+hash(k)*0.6})`;g.fillRect(hash(k*3.1)*W2,hash(k*7.7)*H2*0.55,1.5,1.5)}}
+ if(A.aurora){for(let b=0;b<3;b++){g.strokeStyle=`rgba(${b?'120,255,190':'90,220,255'},0.22)`;g.lineWidth=18-b*5;g.beginPath();for(let x=0;x<=W2;x+=10)g.lineTo(x,50+b*16+Math.sin(x/70+b)*18);g.stroke()}}
+ if(A.sun){const gr=g.createRadialGradient(W2*0.8,H2*0.62,0,W2*0.8,H2*0.62,160);gr.addColorStop(0,'rgba(255,200,120,0.8)');gr.addColorStop(1,'rgba(255,200,120,0)');g.fillStyle=gr;g.fillRect(0,0,W2,H2)}
+ for(let L2=0;L2<2;L2++){g.fillStyle=L2?'#dfe7ef':'#9fb0c2';if(night)g.fillStyle=L2?'#5a6e88':'#2c3a52';g.beginPath();g.moveTo(0,H2);for(let x=0;x<=W2;x+=20)g.lineTo(x,H2*(0.55+L2*0.13)-hash(x*0.37+L2*9+i)*40*(1.2-L2));g.lineTo(W2,H2);g.fill()}
+ if(A.show.includes('saw')&&i===2){for(let k=0;k<14;k++){const x=20+k*46+hash(k)*20,y=H2*0.66;g.strokeStyle='#4a3a2a';g.lineWidth=3;g.beginPath();g.moveTo(x,y);g.lineTo(x+hash(k+3)*6-3,y-40-hash(k)*30);g.stroke();g.lineWidth=1.5;g.beginPath();g.moveTo(x,y-25);g.lineTo(x-10,y-38);g.moveTo(x,y-32);g.lineTo(x+9,y-44);g.stroke()}}
+ g.fillStyle=night?'#7f93ad':'#f4f8fc';g.beginPath();g.ellipse(W2/2,H2+20,W2*0.7,70,0,0,TAU);g.fill();
+ const fx=W2*0.5,fy=H2*0.8,u=26,lit=A.lit;
  g.fillStyle='#2b2f35';g.beginPath();g.moveTo(fx-u,fy);g.lineTo(fx-u*0.7,fy-u*4);g.lineTo(fx+u*0.7,fy-u*4);g.lineTo(fx+u,fy);g.fill();
  g.fillStyle='#7d6340';for(let k=0;k<5;k++)g.fillRect(fx-u*(0.95-k*0.06),fy-u*(0.6+k*0.75),u*(1.9-k*0.12),3);
  g.fillStyle='#3a3f46';g.fillRect(fx-u*0.95,fy-u*4.3,u*1.9,u*0.35);
  const door=g.createRadialGradient(fx,fy-u*0.6,0,fx,fy-u*0.6,u*0.8);door.addColorStop(0,lit?'#fff4c8':'#ffb070');door.addColorStop(0.5,lit?'#ff9a3c':'rgba(160,70,30,0.6)');door.addColorStop(1,'rgba(120,30,10,0.9)');
  g.fillStyle=door;g.beginPath();g.moveTo(fx-u*0.4,fy);g.lineTo(fx-u*0.4,fy-u*0.7);g.arc(fx,fy-u*0.7,u*0.4,Math.PI,0);g.lineTo(fx+u*0.4,fy);g.fill();
  if(lit){const gl=g.createRadialGradient(fx,fy-u,0,fx,fy-u,u*5);gl.addColorStop(0,'rgba(255,170,80,0.35)');gl.addColorStop(1,'rgba(255,170,80,0)');g.fillStyle=gl;g.fillRect(0,0,W2,H2);
-  for(let k=0;k<6;k++){g.fillStyle=`rgba(${i===5?'200,205,212':'110,114,122'},${0.35-k*0.04})`;g.beginPath();g.arc(fx+k*14+hash(k)*10,fy-u*4.6-k*16,10+k*5,0,TAU);g.fill()}}
- // 建筑
- const show={0:['tent','tent','coal'],1:['hunt','kitchen','tent'],2:['med','saw','tent'],3:['steel','lab','saw'],4:['house','heater','house'],5:['house','heater','coal']}[i];
+  for(let k=0;k<6;k++){g.fillStyle=`rgba(${A.storm?'200,205,212':'110,114,122'},${0.35-k*0.04})`;g.beginPath();g.arc(fx+k*14+hash(k)*10,fy-u*4.6-k*16,10+k*5,0,TAU);g.fill()}}
  const pos=[[W2*0.2,H2*0.86,0.7],[W2*0.8,H2*0.84,0.75],[W2*0.33,H2*0.74,0.5]];
- show.forEach((k,j)=>{g.save();g.translate(pos[j][0],pos[j][1]);drawType(g,k,40*pos[j][2],{t:1000,lit:true,work:true,cold:i>=4,seed:j+i});g.restore()});
- // 人物 / 小狗
- const cols=['#5a4636','#3d5168','#6a3a30','#4a5a3a'];
- for(let k=0;k<4;k++){const x=W2*0.4+k*34-(k>1?0:10),y=H2*0.95-(k%2)*6;if(isDog())puppy(g,x,y,30-(k===3?8:0),{t:1000,ph:k*1.3,dir:1,cold:i>=4,hat:i===5&&k%2===0,carry:k===1&&i!==0?'#8a5a32':null});else person(g,x,y,22-(k===3?6:0),cols[k],k*1.3,k===1&&i!==0?'#8a5a32':null,false)}
- if(i===5){const gr=g.createLinearGradient(W2*0.55,0,W2,0);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(255,255,255,0.95)');g.fillStyle=gr;g.fillRect(0,0,W2,H2);g.strokeStyle='rgba(255,255,255,0.7)';for(let k=0;k<60;k++){const x=hash(k)*W2,y=hash(k*2.3)*H2;g.lineWidth=1+hash(k*5)*1.5;g.beginPath();g.moveTo(x,y);g.lineTo(x-18,y+5);g.stroke()}}
- if(i===4){g.fillStyle='rgba(220,240,255,0.85)';for(let k=0;k<90;k++){g.beginPath();g.arc(hash(k*1.7)*W2,hash(k*4.1)*H2,1+hash(k)*2,0,TAU);g.fill()}}
+ A.show.forEach((k,j)=>{g.save();g.translate(pos[j][0],pos[j][1]);drawType(g,k,40*pos[j][2],{t:1000,lit:true,work:true,cold:!!A.snow||!!A.storm,seed:j+i});g.restore()});
+ const cols=['#5a4636','#3d5168','#6a3a30','#4a5a3a'],cold=!!A.snow||!!A.storm;
+ for(let k=0;k<4;k++){const x=W2*0.4+k*34-(k>1?0:10),y=H2*0.95-(k%2)*6;if(isDog())puppy(g,x,y,30-(k===3?8:0),{t:1000,ph:k*1.3,dir:1,cold,hat:!!A.storm&&k%2===0,carry:k===1&&i!==0?'#8a5a32':null});else person(g,x,y,22-(k===3?6:0),cols[k],k*1.3,k===1&&i!==0?'#8a5a32':null,false)}
+ if(A.storm){const gr=g.createLinearGradient(W2*0.55,0,W2,0);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(255,255,255,0.95)');g.fillStyle=gr;g.fillRect(0,0,W2,H2);g.strokeStyle='rgba(255,255,255,0.7)';for(let k=0;k<60;k++){const x=hash(k)*W2,y=hash(k*2.3)*H2;g.lineWidth=1+hash(k*5)*1.5;g.beginPath();g.moveTo(x,y);g.lineTo(x-18,y+5);g.stroke()}}
+ if(A.snow){g.fillStyle='rgba(220,240,255,0.85)';for(let k=0;k<90;k++){g.beginPath();g.arc(hash(k*1.7)*W2,hash(k*4.1)*H2,1+hash(k)*2,0,TAU);g.fill()}}
  const vg=g.createRadialGradient(W2/2,H2/2,H2*0.4,W2/2,H2/2,W2*0.65);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.45)');g.fillStyle=vg;g.fillRect(0,0,W2,H2);
  return artCache[key]=c.toDataURL('image/jpeg',0.86);
 }
 /* ---------- 关卡选择 / 章节介绍 ---------- */
 function showChapterIntro(i){
  makeDemo();const c=CH[i],saved=loadCamp(i),sc=$('#screen');sc.classList.remove('hidden');
- const unl=c.newB.map(k=>`<span class="ub"><img src="${thumbs[k]}" alt="">${B[k].name}</span>`).join('')+(c.feat.tech&&!(CH[i-1]||{feat:{}}).feat.tech?`<span class="ub"><i>${IC.tech}</i>研究</span>`:'')+(c.feat.laws&&!(CH[i-1]||{feat:{}}).feat.laws?`<span class="ub"><i>${IC.law}</i>法典</span>`:'')+(i===5?'<span class="ub">全部建筑与科技</span>':'');
+ const unl=c.newB.map(k=>`<span class="ub"><img src="${thumbs[k]}" alt="">${B[k].name}</span>`).join('')+(c.feat.tech&&!(CH[i-1]||{feat:{}}).feat.tech?`<span class="ub"><i>${IC.tech}</i>研究</span>`:'')+(c.feat.laws&&!(CH[i-1]||{feat:{}}).feat.laws?`<span class="ub"><i>${IC.law}</i>法典</span>`:'')+(i===CH.length-1?'<span class="ub">全部建筑与科技</span>':'')+(c.feat.over&&!(CH[i-1]||{feat:{}}).feat.over?`<span class="ub"><i>${IC.furnace}</i>熔炉超载</span>`:'');
  sc.innerHTML=`<div class="scr intro"><div class="paper story"><div class="art"><img src="${chapterArt(i)}" alt=""><div class="cap">第 ${i+1} 章</div></div><h2>${c.n}</h2><div class="orn">${c.place} · 共 ${c.days} 天</div>
  <p>${L(T(c.intro))}</p>
  ${unl?`<div class="unl"><b>本章解锁</b>${unl}</div>`:''}
@@ -1812,16 +1872,53 @@ function loadCamp(i){try{const s=JSON.parse(localStorage.getItem(CAMP_KEY+i));if
 function chapterListHTML(){
  const p=getProg(),rec=CH.findIndex((c,i)=>!p.stars[i]);
  return '<div class="journey">'+CH.map((c,i)=>{const st=p.stars[i]||0,sv=loadCamp(i);
-  return `<button class="chnode ${st?'done':''} ${i===rec?'rec':''}" data-ch="${i}"><div class="dot">${st?'✔':i+1}</div><div class="cinfo"><div class="ct">第${i+1}章 · <b>${c.n}</b>${i===rec?'<span class="rtag">推荐</span>':''}</div><div class="cs">${c.newB.length?'解锁：'+c.newB.map(k=>B[k].name).join('、'):'全部内容 · 终章'}${sv?` · <span class="sv">进行中 第${sv.day}天</span>`:''}</div></div><div class="stars">${[0,1,2].map(k=>`<span class="${k<st?'on':''}">★</span>`).join('')}</div></button>`}).join('')+'</div>';
+  return `<button class="chnode ${st?'done':''} ${i===rec?'rec':''}" data-ch="${i}"><div class="dot">${st?'✔':i+1}</div><div class="cinfo"><div class="ct">第${i+1}章 · <b>${c.n}</b>${i===rec?'<span class="rtag">推荐</span>':''}</div><div class="cs">${unlockLabel(i)}${sv?` · <span class="sv">进行中 第${sv.day}天</span>`:''}</div></div><div class="stars">${[0,1,2].map(k=>`<span class="${k<st?'on':''}">★</span>`).join('')}</div></button>`}).join('')+'</div>';
 }
+/* ====================== 更多随机事件 + 连锁事件 ====================== */
+const EV_MIN={train:1,wedding:1,preacher:2,theft:2,cache:3,sickchild:3,gamble:4,frost:4,noise:4,strike:6,ref:8};
+function evAllowed(e){if(!inCamp())return true;if(S.ch===0)return false;return S.ch>=(e.minCh??EV_MIN[e.id]??1)}
+function addChain(h,id,d){(S.chain||(S.chain=[])).push({at:(S.day-1)*24+S.hour+h,id,d:d||{}})}
+function chainTick(){if(!S.chain||!S.chain.length||modalOpen||S.ended)return;const T0=(S.day-1)*24+S.hour;const k=S.chain.findIndex(c=>c.at<=T0);if(k<0)return;const c=S.chain.splice(k,1)[0];CHAIN[c.id]&&CHAIN[c.id](c.d)}
+const ev=(title,text,choices)=>showModal(T(title),T(text),choices.map(c=>({...c,t:T(c.t),d:c.d&&T(c.d)})));
+const hasB=t=>S.b.some(b=>b&&b.type===t);
+const healthyW=()=>S.pop.w-S.sick.w;
+const CHAIN={
+ rescue:d=>{addPop({w:d.n+1});S.seen.rescued=1;S.res.steel+=40;S.hope+=6;let x='';if(d.fast&&Math.random()<0.35){makeSick(1);x='<br>有一名队员冻伤了，被送进了医疗站。'}
+  ev('阿岩回来了',`救援队扶着阿岩回到了城里。他冻掉了半截眉毛，却咧着嘴笑：“仓库找到了！我还带回了 40 块钢，和一张标着<b>新希望</b>位置的地图。”${x}`,[{t:'太好了！',d:'钢铁 +40，希望 +6，阿岩归队',fn:()=>{}}])},
+ coalback:d=>{if(Math.random()<0.75){S.res.coal+=d.n*2;S.res.steel+=10;ev('守信的邻居',`上次借煤的营地派{人|狗狗}送来了加倍的煤炭，还附上 10 块钢铁表示感谢。`,[{t:'好人有好报',d:`煤炭 +${d.n*2}，钢铁 +10，希望 +3`,fn:()=>{S.hope+=3}}])}else ev('音讯全无',`借走煤炭的营地再也没有消息。也许他们没能熬过去……`,[{t:'唉',d:'希望 -2',fn:()=>{S.hope-=2}}])},
+ mapdig:d=>{if(Math.random()<0.65){S.res.coal+=110;ev('真的有煤！',`按老矿工的地图，挖掘队在冻土下挖出了一条浅煤层！`,[{t:'老人家立了大功',d:'煤炭 +110，希望 +3',fn:()=>{S.hope+=3}}])}else ev('白忙一场',`挖了两天，只挖出一堆碎石。老矿工羞愧地低下了头。`,[{t:'安慰他',d:'希望 +1',fn:()=>{S.hope+=1}},{t:'责怪他',d:'不满 -2，希望 -3',fn:()=>{S.disc-=2;S.hope-=3}}])},
+ concert:d=>ev('熔炉边的音乐会',`那位手风琴手组织了一场小小的音乐会，孩子们围着熔炉跳舞。`,[{t:'全城一起听',d:'希望 +6，不满 -6，停工 2 小时',fn:()=>{S.hope+=6;S.disc-=6;S.strike=Math.max(S.strike,2)}},{t:'下班后再说',d:'希望 +2',fn:()=>{S.hope+=2}}]),
+ scoutback:d=>{if(Math.random()<0.7){addPop({w:1});ev('找到了！',`搜救队在一座冰洞里找到了失踪的侦察兵，他还活着！`,[{t:'欢迎回来',d:'人口 +1，希望 +6',fn:()=>{S.hope+=6}}])}else ev('只找到了围巾',`搜救队只带回了一条冻硬的围巾。`,[{t:'为他默哀',d:'希望 -4',fn:()=>{S.hope-=4}}])},
+ thiefback:d=>ev('工具又回来了',`偷工具的{人|狗狗}主动把剩下的工具还了回来，说是为了给生病的家{人|狗}换药。`,[{t:'原谅他',d:'钢铁 +8，希望 +3',fn:()=>{S.res.steel+=8;S.hope+=3}},{t:'罚他加班',d:'钢铁 +8，不满 +3',fn:()=>{S.res.steel+=8;S.disc+=3}}]),
+ seedsgrow:d=>ev('冻土里的绿芽',`林婉在熔炉边的温室角落里种下的种子，居然发芽了！虽然不多，但大家都跑来看。`,[{t:'分给病人和孩子',d:'口粮 +20，希望 +5',fn:()=>{S.res.food+=20;S.hope+=5}}]),
+};
+EVENTS.push(
+ {id:'aurora',w:2,minCh:1,run:()=>ev('极光之夜','夜空中亮起了绿色的极光，像一条发光的河。很多{人|狗狗}跑出来看，舍不得回去睡觉。',[{t:'让大家看个够',d:'希望 +6，明早停工 3 小时',fn:()=>{S.hope+=6;S.strike=Math.max(S.strike,3)}},{t:'催大家回去休息',d:'不满 +2',fn:()=>{S.disc+=2}}])},
+ {id:'tentfire',w:2,minCh:1,cond:()=>hasB('tent'),run:()=>ev('帐篷着火了','一顶帐篷里的小火炉翻倒了，火苗窜上了帆布！',[{t:'全力救火',d:'木材 -15（修补帐篷），希望 +2',ok:()=>S.res.wood>=15,fn:()=>{S.res.wood-=15;S.hope+=2}},{t:'先保住旁边的帐篷',d:'烧掉一顶帐篷，希望 -5',fn:()=>{const i=S.b.findIndex(b=>b&&b.type==='tent');if(i>=0){S.b[i]=null;recalcCache()}S.hope-=5;log('一顶帐篷被烧毁了。','bad')}}])},
+ {id:'storyteller',w:2,minCh:1,cond:()=>S.pop.c>0,run:()=>ev('讲故事的老{人|狗}','一位老{人|狗}每晚给孩子们讲冰封前的世界：有花、有海，还有夏天。',[{t:'给他加一份口粮',d:'口粮 -5，希望 +4',ok:()=>S.res.food>=5,fn:()=>{S.res.food-=5;S.hope+=4}},{t:'别让孩子们熬夜',d:'无事发生',fn:()=>{}}])},
+ {id:'accordion',w:2,minCh:1,run:()=>ev('手风琴','一位铁港来的乐手在废墟里找到了一架旧手风琴，想在晚上演奏。',[{t:'支持他',d:'希望 +3；他说过几天要办一场音乐会',fn:()=>{S.hope+=3;addChain(60,'concert')}},{t:'太吵了，没收',d:'不满 +3',fn:()=>{S.disc+=3}}])},
+ {id:'twins',w:1,minCh:2,run:()=>ev('双胞胎','熔炉旁的帐篷里诞生了一对双胞胎！这是来到陨坑后第一次有新生命。',[{t:'全城庆祝',d:'儿童 +2，口粮 -10，希望 +7',ok:()=>S.res.food>=10,fn:()=>{S.res.food-=10;addPop({c:2});S.hope+=7}},{t:'低调一点',d:'儿童 +2，希望 +3',fn:()=>{addPop({c:2});S.hope+=3}}])},
+ {id:'seeds',w:2,minCh:2,run:()=>ev('冻土下的种子','挖煤的{人|狗狗}挖出一小罐冻住的种子，标签上写着“甜菜”。',[{t:'交给林婉试着种',d:'几天后也许会有收获',fn:()=>addChain(72,'seedsgrow')},{t:'直接煮了吃',d:'口粮 +12',fn:()=>{S.res.food+=12}}])},
+ {id:'coaldebt',w:2,minCh:2,cond:()=>S.res.coal>=80,run:()=>ev('借煤','一个小营地的信使跪在城门口：“我们的炉子快灭了，借我们 60 煤炭，三天后加倍奉还！”',[{t:'借给他们',d:'煤炭 -60；他们可能会守信……',fn:()=>{S.res.coal-=60;addChain(72,'coalback',{n:60})}},{t:'我们自己也不宽裕',d:'希望 -3',fn:()=>{S.hope-=3}}])},
+ {id:'oldmap',w:2,minCh:2,cond:()=>hasB('coal'),run:()=>ev('老矿工的地图','一位老矿工画了张草图，坚称城北的冻土下有浅煤层。',[{t:'派{人|狗狗}按图去挖',d:'停工 3 小时；两天后见分晓',fn:()=>{S.strike=Math.max(S.strike,3);addChain(48,'mapdig')}},{t:'别瞎折腾了',d:'无事发生',fn:()=>{}}])},
+ {id:'hoarder',w:2,minCh:2,cond:()=>S.res.food>30,run:()=>ev('囤积者','有{人|狗狗}发现，一户{人家|狗狗}在帐篷底下藏了好几罐口粮。',[{t:'没收充公',d:'口粮 +30，不满 +6',fn:()=>{S.res.food+=30;S.disc+=6}},{t:'劝他们主动交出来',d:'希望 +2，一半可能拿回 15 口粮',fn:()=>{S.hope+=2;if(Math.random()<0.5){S.res.food+=15;log('他们交出了 15 份口粮。','good')}}}])},
+ {id:'wolves',w:2,minCh:2,cond:()=>hasB('hunt'),run:()=>ev(isDog()?'雪原上的狼':'狼群','猎人们在北坡遇到了一群饿狼，抢走了刚打到的猎物。',[{t:'组织{人|狗狗}把狼赶走',d:'生食 +20；有三成可能有{人|狗狗}受伤',fn:()=>{S.res.raw+=20;if(Math.random()<0.3)makeSick(2)}},{t:'这几天别去北坡了',d:'生食 -15，希望 -2',fn:()=>{S.res.raw=Math.max(0,S.res.raw-15);S.hope-=2}}])},
+ {id:'collapse',w:2,minCh:3,cond:()=>hasB('coal')&&healthyW()>4,run:()=>ev('矿井塌方','采煤站的一段坑道塌了，两个工人被困在下面！',[{t:'全力营救',d:'停工 5 小时，希望 +5',fn:()=>{S.strike=Math.max(S.strike,5);S.hope+=5;log('被困的工人都救出来了。','good')}},{t:'太危险，封住坑道',d:'2 人遇难，不满 +5',fn:()=>{kill(2,false,'被埋在了坑道里');S.disc+=5}}])},
+ {id:'blizzard',w:2,minCh:3,run:()=>ev('白毛风','突如其来的白毛风刮得{人|狗狗}睁不开眼。在外面干活很容易冻病。',[{t:'停工避风 6 小时',d:'停工 6 小时',fn:()=>{S.strike=Math.max(S.strike,6)}},{t:'咬牙继续干',d:'约 4 {人|只}生病，不满 +3',fn:()=>{makeSick(4);S.disc+=3}}])},
+ {id:'rumor',w:2,minCh:3,cond:()=>S.furnace.lvl>=1,run:()=>ev('熔炉要爆炸？','有{人|狗狗}在传：熔炉的裂缝越来越大，随时会爆炸。很多{人|狗狗}不敢睡觉。',[{t:'公开检修给大家看',d:'煤炭 -20，不满 -5',ok:()=>S.res.coal>=20,fn:()=>{S.res.coal-=20;S.disc-=5}},{t:'下令禁止散布谣言',d:'不满 +6',fn:()=>{S.disc+=6}}])},
+ {id:'trader',w:2,minCh:3,run:()=>ev('流浪商{人|狗}','一个拉着雪橇的流浪商{人|狗}路过陨坑，愿意做点交易。',[{t:'30 木材换 12 钢铁',ok:()=>S.res.wood>=30,fn:()=>{S.res.wood-=30;S.res.steel+=12}},{t:'20 口粮换 60 煤炭',ok:()=>S.res.food>=20,fn:()=>{S.res.food-=20;S.res.coal+=60}},{t:'不需要，谢谢',fn:()=>{}}])},
+ {id:'lostscout',w:1,minCh:4,cond:()=>healthyW()>6,run:()=>ev('失踪的侦察兵','一名外出侦察的{人|狗狗}到天黑都没回来，外面正刮着风。',[{t:'派搜救队',d:'口粮 -10，停工 2 小时；明天见分晓',ok:()=>S.res.food>=10,fn:()=>{S.res.food-=10;S.strike=Math.max(S.strike,2);addChain(24,'scoutback')}},{t:'等天亮再说',d:'1 {人|只}失踪，希望 -5',fn:()=>{S.pop.w=Math.max(0,S.pop.w-1);reconcile();S.stats.deaths++;S.hope-=5}}])},
+ {id:'toolthief',w:2,minCh:6,cond:()=>S.res.steel>=15,run:()=>ev('工具失窃','仓库里少了一批钢制工具，守卫怀疑是有{人|狗狗}偷偷拿走了。',[{t:'挨个搜查帐篷',d:'找回工具，但不满 +6',fn:()=>{S.disc+=6}},{t:'不追究',d:'钢铁 -10；也许小偷会良心发现',fn:()=>{S.res.steel=Math.max(0,S.res.steel-10);if(Math.random()<0.6)addChain(48,'thiefback')}}])},
+);
 /* ====================== 主循环 ====================== */
 let prevT=performance.now(),uiT=0;
+const hourLen=()=>HOUR_MS*((S.hour<6||S.hour>=22)?0.6:1); // 夜里没人干活，时间稍快
 function windNow(){if(!S)return 0.3;return S.day>=28?3:S.cache.out<-40?0.9:0.3}
 function loop(now){
  const dt=Math.min(100,now-prevT);prevT=now;
  try{
   if(S&&!S.ended&&!S.demo){
-   if(speed>0&&!modalOpen){S.acc+=dt*speed;let guard=0;while(S.acc>=HOUR_MS&&!S.ended&&!modalOpen&&guard++<5){S.acc-=HOUR_MS;processHour();if(!S.ended){recordHour();refreshSheet(false);if(place&&place.slot>=0)renderPlace()}}}
+   if(speed>0&&!modalOpen){S.acc+=dt*speed;let guard=0;while(S.acc>=hourLen()&&!S.ended&&!modalOpen&&guard++<5){S.acc-=hourLen();processHour();if(!S.ended){recordHour();refreshSheet(false);if(place&&place.slot>=0)renderPlace()}}}
    uiT+=dt;if(uiT>200){uiT=0;updateUI()}
    if(tut)renderTut();
   }
@@ -1842,7 +1939,7 @@ function showIntro(){
  const sc=$('#screen');sc.classList.remove('hidden');
  sc.innerHTML=`<div class="scr menu"><h1>冰原余烬</h1><div class="sub">${isDog()?'—— 小狗版 · 熔炉不熄，狗心不灭 ——':'—— 熔炉不熄，人心不灭 ——'}</div>
  ${skinToggleHTML()}
- <div class="mhead"><b>故事模式</b><span>六章故事，一章一章解锁新建筑。第一次玩建议从第1章开始，也可以直接选任意一章。</span></div>
+ <div class="mhead"><b>故事模式</b><span>十章故事，一章一章解锁新建筑。第一次玩建议从第1章开始，也可以直接选任意一章。</span></div>
  ${chapterListHTML()}
  <div class="mhead"><b>生存模式（自由模式）</b><span>全部建筑一次开放，坚持 ${DAYS} 天熬过大风暴，适合熟悉玩法后挑战。</span></div>
  <div class="btns">${saved?`<button class="btn" id="contBtn">继续生存（第${saved.day}天）</button>`:''}<button class="btn" id="newBtn">${saved?'新的生存挑战':'开始生存模式'}</button></div></div>`;
@@ -1876,7 +1973,7 @@ buildHUD();applySkinUI();bindUI();makeThumbs();resize();showIntro();
 requestAnimationFrame(loop);
 // 测试钩子
 window.__game={get S(){return S},set S(v){S=v},processHour,build,addStaff,fillStaff,setFurnace,toggleOver,signLaw,doEmergency,doFestival,startGame,B,TECH,LAWS,slots,outsideTemp,get modalOpen(){return modalOpen},modalChoices:()=>modalChoices,pickChoice:i=>{const b=document.querySelector(`#modal [data-ch="${i}"]`);b&&b.click()},setSpeed,openSlot,openSheet,recalcCache,totalPop,startPlace,endTutorial,get tut(){return tut},get place(){return place},recommendSlot,
- setSkin,get skin(){return SKIN},camT,CH,startChapter,showChapterIntro,showIntro,campCheck,chState,starsOf,getProg,get objOpen(){return objOpen},set objOpen(v){objOpen=v},slotScreen:i=>{updateCamera(10000);const [x,y]=w2s(slots[i].x,slots[i].y);return {x,y}},furnaceScreen:()=>{updateCamera(10000);const [x,y]=w2s(0,-0.05);return {x,y}},snapCam:()=>{updateCamera(100000)}};
+ setSkin,get skin(){return SKIN},camT,CH,EVENTS,CHAIN,addChain,chainTick,startChapter,showChapterIntro,showIntro,campCheck,chState,starsOf,getProg,get objOpen(){return objOpen},set objOpen(v){objOpen=v},slotScreen:i=>{updateCamera(10000);const [x,y]=w2s(slots[i].x,slots[i].y);return {x,y}},furnaceScreen:()=>{updateCamera(10000);const [x,y]=w2s(0,-0.05);return {x,y}},snapCam:()=>{updateCamera(100000)}};
 </script>
 </body>
 </html>
